@@ -1,8 +1,19 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState, type ChangeEvent } from "react";
+import dynamic from "next/dynamic";
 import type { AlsintanActionState } from "@/lib/actions/alsintan";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
+import { compressImage } from "@/lib/compress-image";
+
+const PetaLokasiPicker = dynamic(() => import("@/components/PetaLokasiPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[260px] items-center justify-center rounded-md border border-gray-300 text-sm text-gray-400">
+      Memuat peta...
+    </div>
+  ),
+});
 
 interface JenisOption {
   id: string;
@@ -45,6 +56,9 @@ export interface AlsintanInitialData {
   kondisi: string;
   id_penerima_saat_ini: string;
   catatan: string | null;
+  foto_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 const inputClass =
@@ -87,6 +101,34 @@ export default function FormAlsintan({
 
   const filteredPenerima = penerimaList.filter((p) => p.id_desa === desaValue);
   const penerimaValue = filteredPenerima.some((p) => p.id === selectedPenerima) ? selectedPenerima : "";
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.foto_url ?? null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressError, setCompressError] = useState<string | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(initialData?.latitude ?? null);
+  const [longitude, setLongitude] = useState<number | null>(initialData?.longitude ?? null);
+
+  async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCompressError(null);
+    setIsCompressing(true);
+    try {
+      const compressed = await compressImage(file);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(compressed);
+      if (fileInputRef.current) fileInputRef.current.files = dataTransfer.files;
+
+      setPreviewUrl(URL.createObjectURL(compressed));
+    } catch (err) {
+      setCompressError(err instanceof Error ? err.message : "Gagal memproses foto.");
+    } finally {
+      setIsCompressing(false);
+    }
+  }
 
   return (
     <form action={formAction} className="max-w-2xl space-y-4">
@@ -258,6 +300,50 @@ export default function FormAlsintan({
             Belum ada data penerima di desa ini. Tambahkan dulu lewat halaman Penerima.
           </p>
         )}
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Foto Unit</label>
+        <input
+          ref={fileInputRef}
+          name="foto"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-gray-200"
+        />
+        {isCompressing && <p className="mt-1 text-xs text-gray-500">Mengompres foto...</p>}
+        {compressError && <p className="mt-1 text-xs text-red-600">{compressError}</p>}
+        {previewUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewUrl}
+            alt="Pratinjau foto unit"
+            className="mt-2 h-32 w-32 rounded-md border border-gray-200 object-cover"
+          />
+        )}
+        <p className="mt-1 text-xs text-gray-500">
+          Foto otomatis dikompres (maks ~500KB, lebar ~1000px) sebelum diupload.
+        </p>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Lokasi</label>
+        <PetaLokasiPicker
+          latitude={latitude}
+          longitude={longitude}
+          onChange={(lat, lng) => {
+            setLatitude(lat);
+            setLongitude(lng);
+          }}
+        />
+        <input type="hidden" name="latitude" value={latitude ?? ""} />
+        <input type="hidden" name="longitude" value={longitude ?? ""} />
+        <p className="mt-1 text-xs text-gray-500">
+          {latitude != null && longitude != null
+            ? `Koordinat: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            : "Klik di peta untuk menandai lokasi unit."}
+        </p>
       </div>
 
       <div>

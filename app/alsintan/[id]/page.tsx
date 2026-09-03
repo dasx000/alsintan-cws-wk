@@ -17,6 +17,9 @@ interface AlsintanDetail {
   nilai_aset: number | null;
   kondisi: string;
   catatan: string | null;
+  foto_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
   master_jenis_alsintan: { nama_jenis: string } | null;
   master_sumber_dana: { nama_sumber: string } | null;
   penerima: {
@@ -50,7 +53,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
     .from("alsintan")
     .select(
       `id, id_unit, merk, tipe, no_rangka, no_mesin, tahun_pengadaan, no_bast, tanggal_bast,
-       nilai_aset, kondisi, catatan,
+       nilai_aset, kondisi, catatan, foto_url, latitude, longitude,
        master_jenis_alsintan(nama_jenis),
        master_sumber_dana(nama_sumber),
        penerima(nama_kelompok, nama_ketua, master_desa(nama_desa, master_kecamatan(nama_kecamatan)))`
@@ -81,6 +84,15 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
         </span>
       </div>
 
+      {alsintan.foto_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={alsintan.foto_url}
+          alt={`Foto ${alsintan.id_unit}`}
+          className="mb-6 h-48 w-48 rounded-lg border border-gray-200 object-cover"
+        />
+      )}
+
       <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-3">
         <Field label="Merk" value={alsintan.merk} />
         <Field label="Tipe" value={alsintan.tipe} />
@@ -109,6 +121,23 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
           <p className="text-sm text-gray-500">Belum ada penerima.</p>
         )}
       </div>
+
+      {alsintan.latitude != null && alsintan.longitude != null && (
+        <div className="mb-6 rounded-lg border border-gray-200 p-4">
+          <h2 className="mb-1 text-sm font-medium text-gray-700">Lokasi</h2>
+          <p className="text-sm text-gray-900">
+            {alsintan.latitude.toFixed(6)}, {alsintan.longitude.toFixed(6)}{" "}
+            <a
+              href={`https://www.openstreetmap.org/?mlat=${alsintan.latitude}&mlon=${alsintan.longitude}#map=17/${alsintan.latitude}/${alsintan.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Lihat di peta →
+            </a>
+          </p>
+        </div>
+      )}
 
       {alsintan.catatan && (
         <div className="mb-6 rounded-lg border border-gray-200 p-4">

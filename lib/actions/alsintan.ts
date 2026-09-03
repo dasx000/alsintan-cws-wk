@@ -9,6 +9,8 @@ export interface AlsintanActionState {
   error: string | null;
 }
 
+const FOTO_BUCKET = "alsintan-foto";
+
 interface ParsedAlsintan {
   id_jenis: string;
   id_penerima_saat_ini: string;
@@ -23,6 +25,8 @@ interface ParsedAlsintan {
   nilai_aset: number | null;
   kondisi: string;
   catatan: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 function parseAlsintanForm(formData: FormData): { error: string | null; data: ParsedAlsintan | null } {
@@ -41,6 +45,10 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
   const nilai_aset = nilaiRaw ? Number(nilaiRaw) : null;
   const kondisi = formData.get("kondisi") as string;
   const catatan = (formData.get("catatan") as string)?.trim() || null;
+  const latRaw = formData.get("latitude") as string;
+  const lngRaw = formData.get("longitude") as string;
+  const latitude = latRaw ? Number(latRaw) : null;
+  const longitude = lngRaw ? Number(lngRaw) : null;
 
   if (!id_jenis || !id_penerima_saat_ini || !tahun_pengadaan || Number.isNaN(tahun_pengadaan) || !kondisi) {
     return {
@@ -65,8 +73,35 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
       nilai_aset,
       kondisi,
       catatan,
+      latitude,
+      longitude,
     },
   };
+}
+
+function extractStoragePath(publicUrl: string, bucket: string): string | null {
+  const marker = `/object/public/${bucket}/`;
+  const idx = publicUrl.indexOf(marker);
+  return idx === -1 ? null : publicUrl.slice(idx + marker.length);
+}
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+async function uploadFotoIfPresent(
+  supabase: SupabaseServerClient,
+  formData: FormData
+): Promise<{ error: string | null; fotoUrl: string | null }> {
+  const fotoFile = formData.get("foto") as File | null;
+  if (!fotoFile || fotoFile.size === 0) return { error: null, fotoUrl: null };
+
+  const path = `alsintan/${crypto.randomUUID()}.jpg`;
+  const { error: uploadError } = await supabase.storage.from(FOTO_BUCKET).upload(path, fotoFile, {
+    contentType: fotoFile.type || "image/jpeg",
+  });
+  if (uploadError) return { error: `Gagal upload foto: ${uploadError.message}`, fotoUrl: null };
+
+  const { data } = supabase.storage.from(FOTO_BUCKET).getPublicUrl(path);
+  return { error: null, fotoUrl: data.publicUrl };
 }
 
 export async function createAlsintan(
@@ -101,6 +136,9 @@ export async function createAlsintan(
     return { error: e instanceof Error ? e.message : "Gagal membuat ID unit." };
   }
 
+  const { error: fotoError, fotoUrl } = await uploadFotoIfPresent(supabase, formData);
+  if (fotoError) return { error: fotoError };
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -108,6 +146,7 @@ export async function createAlsintan(
   const { error } = await supabase.from("alsintan").insert({
     ...parsed.data,
     id_unit: idUnit,
+    foto_url: fotoUrl,
     dibuat_oleh: user?.id,
   });
 
@@ -131,9 +170,24 @@ export async function updateAlsintan(
   if (parsed.error || !parsed.data) return { error: parsed.error ?? "Data tidak valid." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("alsintan").update(parsed.data).eq("id", id);
 
+  // Ambil foto lama SEBELUM update, supaya kalau ada foto baru, foto lama
+  // bisa dihapus dari Storage setelah update berhasil (tidak menumpuk sampah).
+  const { data: existing } = await supabase.from("alsintan").select("foto_url").eq("id", id).single();
+
+  const { error: fotoError, fotoUrl } = await uploadFotoIfPresent(supabase, formData);
+  if (fotoError) return { error: fotoError };
+
+  const updateData: ParsedAlsintan & { foto_url?: string } = { ...parsed.data };
+  if (fotoUrl) updateData.foto_url = fotoUrl;
+
+  const { error } = await supabase.from("alsintan").update(updateData).eq("id", id);
   if (error) return { error: error.message };
+
+  if (fotoUrl && existing?.foto_url) {
+    const oldPath = extractStoragePath(existing.foto_url, FOTO_BUCKET);
+    if (oldPath) await supabase.storage.from(FOTO_BUCKET).remove([oldPath]);
+  }
 
   revalidatePath("/alsintan");
   revalidatePath(`/alsintan/${id}`);
@@ -142,8 +196,16 @@ export async function updateAlsintan(
 
 export async function deleteAlsintan(id: string): Promise<{ error: string | null }> {
   const supabase = await createClient();
+
+  const { data: existing } = await supabase.from("alsintan").select("foto_url").eq("id", id).single();
+
   const { error } = await supabase.from("alsintan").delete().eq("id", id);
   if (error) return { error: error.message };
+
+  if (existing?.foto_url) {
+    const path = extractStoragePath(existing.foto_url, FOTO_BUCKET);
+    if (path) await supabase.storage.from(FOTO_BUCKET).remove([path]);
+  }
 
   revalidatePath("/alsintan");
   return { error: null };
