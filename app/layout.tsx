@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Daftar Alat - CRUD Test",
-  description: "Aplikasi CRUD uji coba stack Next.js + Supabase + Vercel",
+  title: "CWS Kabupaten Way Kanan - Monitoring Alsintan",
+  description: "Database & peta sebaran alsintan bantuan pemerintah Kabupaten Way Kanan",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
