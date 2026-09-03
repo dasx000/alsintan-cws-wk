@@ -53,14 +53,22 @@ export default async function AlsintanPage({
       </Link>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Alsintan</h1>
-        {canWrite && (
-          <Link
-            href="/alsintan/tambah"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        <div className="flex gap-2">
+          <a
+            href="/api/alsintan/export"
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            + Tambah Data
-          </Link>
-        )}
+            Ekspor CSV
+          </a>
+          {canWrite && (
+            <Link
+              href="/alsintan/tambah"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + Tambah Data
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200">
