@@ -37,6 +37,9 @@ export default async function DashboardPage() {
       </p>
 
       <div className="flex flex-col gap-2">
+        <Link href="/peta" className="text-sm text-blue-600 hover:underline">
+          Peta Sebaran →
+        </Link>
         <Link href="/alsintan" className="text-sm text-blue-600 hover:underline">
           Kelola Alsintan →
         </Link>
