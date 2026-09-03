@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
@@ -124,9 +125,9 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
   }));
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <Link href="/alsintan" className="mb-4 inline-block text-sm text-blue-600 hover:underline">
-        ← Kembali ke daftar
+    <div className="mx-auto max-w-3xl">
+      <Link href="/alsintan" className="mb-4 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+        <ArrowLeft size={14} /> Kembali ke daftar
       </Link>
 
       <div className="mb-6 flex items-start justify-between">
@@ -152,7 +153,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
         />
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-3">
         <Field label="Merk" value={alsintan.merk} />
         <Field label="Tipe" value={alsintan.tipe} />
         <Field label="Tahun Pengadaan" value={alsintan.tahun_pengadaan} />
@@ -167,7 +168,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
         />
       </div>
 
-      <div className="mb-6 rounded-lg border border-gray-200 p-4">
+      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-2 text-sm font-medium text-gray-700">Penerima Saat Ini</h2>
         {alsintan.penerima ? (
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -182,7 +183,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       </div>
 
       {alsintan.latitude != null && alsintan.longitude != null && (
-        <div className="mb-6 rounded-lg border border-gray-200 p-4">
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h2 className="mb-1 text-sm font-medium text-gray-700">Lokasi</h2>
           <p className="text-sm text-gray-900">
             {alsintan.latitude.toFixed(6)}, {alsintan.longitude.toFixed(6)}{" "}
@@ -199,7 +200,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       )}
 
       {alsintan.catatan && (
-        <div className="mb-6 rounded-lg border border-gray-200 p-4">
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h2 className="mb-1 text-sm font-medium text-gray-700">Catatan</h2>
           <p className="text-sm text-gray-900">{alsintan.catatan}</p>
         </div>
@@ -209,9 +210,9 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
         <div className="mb-6 flex gap-2">
           <Link
             href={`/alsintan/${id}/edit`}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Edit
+            <Pencil size={15} /> Edit
           </Link>
           {canDelete && <DeleteAlsintanButton id={id} idUnit={alsintan.id_unit} />}
         </div>
@@ -234,6 +235,6 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
         <RiwayatServis idAlsintan={id} entries={servisRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
         <RiwayatMonev idAlsintan={id} entries={monevRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
       </div>
-    </main>
+    </div>
   );
 }

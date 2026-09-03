@@ -152,7 +152,7 @@ export default function JenisAlsintanManager({
         <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{deleteError}</p>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>

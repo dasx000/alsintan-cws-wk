@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PenggunaManager from "@/components/PenggunaManager";
@@ -19,12 +18,9 @@ export default async function PenggunaPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <Link href="/dashboard" className="mb-4 inline-block text-sm text-blue-600 hover:underline">
-        ← Dashboard
-      </Link>
+    <div className="mx-auto max-w-4xl">
       <h1 className="mb-6 text-xl font-semibold text-gray-900">Kelola Pengguna</h1>
       <PenggunaManager users={users ?? []} kecamatanList={kecamatanList ?? []} />
-    </main>
+    </div>
   );
 }

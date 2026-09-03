@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# hasil download ekspor CSV yang nyasar ke root project
+/*.csv
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

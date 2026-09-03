@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { deleteAlsintan } from "@/lib/actions/alsintan";
 
 export default function DeleteAlsintanButton({ id, idUnit }: { id: string; idUnit: string }) {
@@ -27,8 +28,9 @@ export default function DeleteAlsintanButton({ id, idUnit }: { id: string; idUni
       <button
         onClick={handleClick}
         disabled={isPending}
-        className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
       >
+        <Trash2 size={15} />
         {isPending ? "Menghapus..." : "Hapus"}
       </button>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

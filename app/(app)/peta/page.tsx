@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PetaFilter from "@/components/PetaFilter";
 import PetaSebaranLoader from "@/components/PetaSebaranLoader";
@@ -76,11 +75,11 @@ export default async function PetaSebaranPage({
     .map((t) => ({ value: String(t), label: String(t) }));
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <Link href="/dashboard" className="mb-4 inline-block text-sm text-blue-600 hover:underline">
-        ← Dashboard
-      </Link>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Peta Sebaran Alsintan</h1>
+    <div className="mx-auto max-w-6xl">
+      <div className="mb-4">
+        <h1 className="text-xl font-semibold text-gray-900">Peta Sebaran Alsintan</h1>
+        <p className="text-sm text-gray-500">{markers.length} unit ditampilkan</p>
+      </div>
 
       <PetaFilter
         jenisOptions={(jenisList ?? []).map((j) => ({ value: j.id, label: j.nama_jenis }))}
@@ -90,12 +89,14 @@ export default async function PetaSebaranPage({
       />
 
       {markers.length === 0 ? (
-        <p className="rounded-md border border-dashed border-gray-300 px-4 py-8 text-center text-gray-500">
+        <p className="rounded-md border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-gray-500">
           Tidak ada unit dengan lokasi yang cocok dengan filter ini.
         </p>
       ) : (
-        <PetaSebaranLoader markers={markers} />
+        <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+          <PetaSebaranLoader markers={markers} />
+        </div>
       )}
-    </main>
+    </div>
   );
 }

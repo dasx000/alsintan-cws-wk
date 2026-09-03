@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { AlertTriangle, Boxes, Gauge, MapPinned } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/lib/actions/auth";
 import { KONDISI_BADGE_STYLES, KONDISI_OPTIONS, kondisiLabel } from "@/lib/kondisi-alsintan";
 
 interface PerJenis {
@@ -54,59 +54,25 @@ export default async function DashboardPage() {
     ...k,
     jumlah: kondisiCounts.find((c) => c.kondisi === k.value)?.jumlah ?? 0,
   }));
+  const totalUnit = kondisiStats.reduce((sum, k) => sum + k.jumlah, 0);
+  const perluPerhatianList = (perluPerhatian ?? []) as PerluPerhatian[];
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
-      <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">CWS Kabupaten Way Kanan</h1>
-          <p className="text-sm text-gray-500">Dashboard Monitoring Alsintan</p>
-        </div>
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Keluar
-          </button>
-        </form>
-      </div>
-
-      <p className="mb-4 text-gray-700">
-        Selamat datang, <span className="font-medium">{profile?.nama || user?.email}</span>{" "}
-        <span className="text-sm text-gray-500">({profile?.role ?? "belum ada role"})</span>
-      </p>
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Link href="/peta" className="text-sm text-blue-600 hover:underline">
-          Peta Sebaran →
-        </Link>
-        <span className="text-gray-300">|</span>
-        <Link href="/alsintan" className="text-sm text-blue-600 hover:underline">
-          Kelola Alsintan →
-        </Link>
-        <span className="text-gray-300">|</span>
-        <Link href="/penerima" className="text-sm text-blue-600 hover:underline">
-          Kelola Penerima →
-        </Link>
-        <span className="text-gray-300">|</span>
-        <Link href="/jenis-alsintan" className="text-sm text-blue-600 hover:underline">
-          Kelola Jenis Alsintan →
-        </Link>
-        {profile?.role === "admin" && (
-          <>
-            <span className="text-gray-300">|</span>
-            <Link href="/pengguna" className="text-sm text-blue-600 hover:underline">
-              Kelola Pengguna →
-            </Link>
-          </>
-        )}
+    <div className="mx-auto max-w-6xl">
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500">
+          Selamat datang, {profile?.nama || user?.email} · Total {totalUnit} unit alsintan terdata
+        </p>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h2 className="mb-3 text-sm font-medium text-gray-700">Unit per Kondisi</h2>
-          <ul className="space-y-1">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-2 text-gray-700">
+            <Gauge size={16} />
+            <h2 className="text-sm font-medium">Unit per Kondisi</h2>
+          </div>
+          <ul className="space-y-1.5">
             {kondisiStats.map((k) => (
               <li key={k.value} className="flex items-center justify-between text-sm">
                 <span
@@ -122,9 +88,12 @@ export default async function DashboardPage() {
           </ul>
         </div>
 
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h2 className="mb-3 text-sm font-medium text-gray-700">Unit per Jenis</h2>
-          <ul className="space-y-1">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-2 text-gray-700">
+            <Boxes size={16} />
+            <h2 className="text-sm font-medium">Unit per Jenis</h2>
+          </div>
+          <ul className="space-y-1.5">
             {((perJenis ?? []) as PerJenis[]).map((j) => (
               <li key={j.id_jenis} className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">{j.nama_jenis}</span>
@@ -134,9 +103,12 @@ export default async function DashboardPage() {
           </ul>
         </div>
 
-        <div className="rounded-lg border border-gray-200 p-4 sm:col-span-2">
-          <h2 className="mb-3 text-sm font-medium text-gray-700">Unit per Kecamatan</h2>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:col-span-2">
+          <div className="mb-3 flex items-center gap-2 text-gray-700">
+            <MapPinned size={16} />
+            <h2 className="text-sm font-medium">Unit per Kecamatan</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
             {((perKecamatan ?? []) as PerKecamatan[]).map((k) => (
               <div key={k.id_kecamatan} className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">{k.nama_kecamatan}</span>
@@ -147,14 +119,20 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 p-4">
-        <h2 className="mb-3 text-sm font-medium text-gray-700">Perlu Perhatian</h2>
-        {(perluPerhatian ?? []).length === 0 ? (
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-gray-700">
+          <AlertTriangle size={16} />
+          <h2 className="text-sm font-medium">Perlu Perhatian</h2>
+        </div>
+        {perluPerhatianList.length === 0 ? (
           <p className="text-sm text-gray-500">Tidak ada unit yang perlu perhatian saat ini.</p>
         ) : (
           <ul className="space-y-2">
-            {((perluPerhatian ?? []) as PerluPerhatian[]).map((u) => (
-              <li key={u.id} className="flex items-center justify-between rounded-md border border-amber-100 bg-amber-50 p-2 text-sm">
+            {perluPerhatianList.map((u) => (
+              <li
+                key={u.id}
+                className="flex flex-col gap-1 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-sm sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div>
                   <Link href={`/alsintan/${u.id}`} className="font-mono font-medium text-gray-900 hover:underline">
                     {u.id_unit}
@@ -181,6 +159,6 @@ export default async function DashboardPage() {
           </ul>
         )}
       </div>
-    </main>
+    </div>
   );
 }

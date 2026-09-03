@@ -48,7 +48,7 @@ export default function RiwayatMutasi({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 p-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <h2 className="mb-3 text-sm font-medium text-gray-700">Riwayat Mutasi</h2>
 
       {canWrite && (

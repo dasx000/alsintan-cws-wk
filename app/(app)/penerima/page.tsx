@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import DeletePenerimaButton from "@/components/DeletePenerimaButton";
 
@@ -49,23 +50,24 @@ export default async function PenerimaPage({
   const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <Link href="/dashboard" className="mb-4 inline-block text-sm text-blue-600 hover:underline">
-        ← Dashboard
-      </Link>
+    <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Penerima (Kelompok Tani)</h1>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Penerima (Kelompok Tani)</h1>
+          <p className="text-sm text-gray-500">{count ?? 0} kelompok terdata</p>
+        </div>
         {canWrite && (
           <Link
             href="/penerima/tambah"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            + Tambah Data
+            <Plus size={16} />
+            Tambah Data
           </Link>
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -136,6 +138,6 @@ export default async function PenerimaPage({
           </Link>
         </div>
       )}
-    </main>
+    </div>
   );
 }
