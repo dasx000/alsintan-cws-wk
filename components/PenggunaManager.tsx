@@ -25,7 +25,7 @@ const ROLE_OPTIONS = [
 const inputClass =
   "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
-function EditRow({
+function EditForm({
   user,
   kecamatanList,
   onCancel,
@@ -40,48 +40,48 @@ function EditRow({
   });
 
   return (
-    <tr>
-      <td className="px-4 py-3" colSpan={4}>
-        <form action={formAction} className="flex flex-wrap items-end gap-3">
-          <div className="w-40">
-            <label className="mb-1 block text-xs font-medium text-gray-700">Role</label>
-            <select name="role" defaultValue={user.role} className={inputClass}>
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="w-56">
-            <label className="mb-1 block text-xs font-medium text-gray-700">Wilayah (untuk penyuluh)</label>
-            <select name="id_kecamatan_wilayah" defaultValue={user.id_kecamatan_wilayah ?? ""} className={inputClass}>
-              <option value="">Tidak dibatasi (semua kecamatan)</option>
-              {kecamatanList.map((k) => (
-                <option key={k.id_kecamatan} value={k.id_kecamatan}>
-                  {k.nama_kecamatan}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isPending ? "Menyimpan..." : "Simpan"}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Batal
-          </button>
-          {state.error && <p className="w-full text-sm text-red-600">{state.error}</p>}
-        </form>
-      </td>
-    </tr>
+    <form
+      action={formAction}
+      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4"
+    >
+      <p className="w-full text-xs font-medium text-blue-700">Mengubah &quot;{user.email}&quot;</p>
+      <div className="w-40">
+        <label className="mb-1 block text-xs font-medium text-gray-700">Role</label>
+        <select name="role" defaultValue={user.role} className={inputClass}>
+          {ROLE_OPTIONS.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="w-56">
+        <label className="mb-1 block text-xs font-medium text-gray-700">Wilayah (untuk penyuluh)</label>
+        <select name="id_kecamatan_wilayah" defaultValue={user.id_kecamatan_wilayah ?? ""} className={inputClass}>
+          <option value="">Tidak dibatasi (semua kecamatan)</option>
+          {kecamatanList.map((k) => (
+            <option key={k.id_kecamatan} value={k.id_kecamatan}>
+              {k.nama_kecamatan}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        type="submit"
+        disabled={isPending}
+        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+      >
+        {isPending ? "Menyimpan..." : "Simpan"}
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Batal
+      </button>
+      {state.error && <p className="w-full text-sm text-red-600">{state.error}</p>}
+    </form>
   );
 }
 
@@ -93,24 +93,27 @@ export default function PenggunaManager({
   kecamatanList: Kecamatan[];
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const editingUser = users.find((u) => u.id === editingId) ?? null;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Wilayah</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-600">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
-          {users.map((u) =>
-            editingId === u.id ? (
-              <EditRow key={u.id} user={u} kecamatanList={kecamatanList} onCancel={() => setEditingId(null)} />
-            ) : (
-              <tr key={u.id}>
+    <div>
+      {editingUser && (
+        <EditForm user={editingUser} kecamatanList={kecamatanList} onCancel={() => setEditingId(null)} />
+      )}
+
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Wilayah</th>
+              <th className="px-4 py-3 text-right font-medium text-gray-600">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {users.map((u) => (
+              <tr key={u.id} className={editingId === u.id ? "bg-blue-50/50" : undefined}>
                 <td className="px-4 py-3 text-gray-900">{u.email}</td>
                 <td className="px-4 py-3 text-gray-700">{u.role}</td>
                 <td className="px-4 py-3 text-gray-700">
@@ -126,17 +129,17 @@ export default function PenggunaManager({
                   </button>
                 </td>
               </tr>
-            )
-          )}
-          {users.length === 0 && (
-            <tr>
-              <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                Belum ada pengguna lain.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            ))}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                  Belum ada pengguna lain.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

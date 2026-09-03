@@ -1,11 +1,12 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import Link from "next/link";
 import { getMarkerIconHtml } from "@/lib/marker-icon";
 import { kondisiLabel } from "@/lib/kondisi-alsintan";
+import MapBaseLayers from "@/components/MapBaseLayers";
 
 export interface PetaMarkerData {
   id: string;
@@ -35,10 +36,7 @@ function markerIconFor(kodeIkon: string, kondisi: string) {
 export default function PetaSebaran({ markers }: { markers: PetaMarkerData[] }) {
   return (
     <MapContainer center={WAY_KANAN_CENTER} zoom={10} style={{ height: "70vh", width: "100%" }}>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <MapBaseLayers />
       <MarkerClusterGroup chunkedLoading>
         {markers.map((m) => (
           <Marker key={m.id} position={[m.latitude, m.longitude]} icon={markerIconFor(m.kode_ikon, m.kondisi)}>

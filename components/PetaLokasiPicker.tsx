@@ -1,7 +1,8 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+import MapBaseLayers from "@/components/MapBaseLayers";
 
 const markerIcon = L.icon({
   iconUrl: "/leaflet/marker-icon.png",
@@ -41,10 +42,7 @@ export default function PetaLokasiPicker({
   return (
     <div className="overflow-hidden rounded-md border border-gray-300">
       <MapContainer center={center} zoom={hasPosition ? 15 : 10} style={{ height: "260px", width: "100%" }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <MapBaseLayers />
         <ClickHandler onPick={onChange} />
         {hasPosition && (
           <Marker
