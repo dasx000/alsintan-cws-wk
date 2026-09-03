@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 
@@ -30,10 +31,14 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      <p className="text-gray-700">
+      <p className="mb-4 text-gray-700">
         Selamat datang, <span className="font-medium">{profile?.nama || user?.email}</span>{" "}
         <span className="text-sm text-gray-500">({profile?.role ?? "belum ada role"})</span>
       </p>
+
+      <Link href="/jenis-alsintan" className="text-sm text-blue-600 hover:underline">
+        Kelola Jenis Alsintan →
+      </Link>
     </main>
   );
 }
