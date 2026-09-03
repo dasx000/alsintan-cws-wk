@@ -36,9 +36,14 @@ export default async function DashboardPage() {
         <span className="text-sm text-gray-500">({profile?.role ?? "belum ada role"})</span>
       </p>
 
-      <Link href="/jenis-alsintan" className="text-sm text-blue-600 hover:underline">
-        Kelola Jenis Alsintan →
-      </Link>
+      <div className="flex flex-col gap-2">
+        <Link href="/penerima" className="text-sm text-blue-600 hover:underline">
+          Kelola Penerima (Kelompok Tani) →
+        </Link>
+        <Link href="/jenis-alsintan" className="text-sm text-blue-600 hover:underline">
+          Kelola Jenis Alsintan →
+        </Link>
+      </div>
     </main>
   );
 }

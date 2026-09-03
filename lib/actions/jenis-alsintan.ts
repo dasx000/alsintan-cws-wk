@@ -13,13 +13,16 @@ export async function createJenisAlsintan(
 ): Promise<JenisAlsintanActionState> {
   const nama_jenis = (formData.get("nama_jenis") as string)?.trim();
   const kode_ikon = formData.get("kode_ikon") as string;
+  const kode_singkat = (formData.get("kode_singkat") as string)?.trim().toUpperCase();
 
-  if (!nama_jenis || !kode_ikon) {
-    return { error: "Nama jenis dan ikon wajib diisi." };
+  if (!nama_jenis || !kode_ikon || !kode_singkat) {
+    return { error: "Nama jenis, kode singkat, dan ikon wajib diisi." };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("master_jenis_alsintan").insert({ nama_jenis, kode_ikon });
+  const { error } = await supabase
+    .from("master_jenis_alsintan")
+    .insert({ nama_jenis, kode_ikon, kode_singkat });
 
   if (error) return { error: error.message };
 
@@ -34,15 +37,16 @@ export async function updateJenisAlsintan(
 ): Promise<JenisAlsintanActionState> {
   const nama_jenis = (formData.get("nama_jenis") as string)?.trim();
   const kode_ikon = formData.get("kode_ikon") as string;
+  const kode_singkat = (formData.get("kode_singkat") as string)?.trim().toUpperCase();
 
-  if (!nama_jenis || !kode_ikon) {
-    return { error: "Nama jenis dan ikon wajib diisi." };
+  if (!nama_jenis || !kode_ikon || !kode_singkat) {
+    return { error: "Nama jenis, kode singkat, dan ikon wajib diisi." };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("master_jenis_alsintan")
-    .update({ nama_jenis, kode_ikon })
+    .update({ nama_jenis, kode_ikon, kode_singkat })
     .eq("id", id);
 
   if (error) return { error: error.message };

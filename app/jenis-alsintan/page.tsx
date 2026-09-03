@@ -17,7 +17,7 @@ export default async function JenisAlsintanPage() {
 
   const { data: jenisList } = await supabase
     .from("master_jenis_alsintan")
-    .select("id, nama_jenis, kode_ikon")
+    .select("id, nama_jenis, kode_singkat, kode_ikon")
     .order("nama_jenis");
 
   return (

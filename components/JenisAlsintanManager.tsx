@@ -12,6 +12,7 @@ import { IKON_OPTIONS } from "@/lib/jenis-alsintan-icons";
 interface JenisAlsintan {
   id: string;
   nama_jenis: string;
+  kode_singkat: string;
   kode_ikon: string;
 }
 
@@ -37,13 +38,26 @@ function AddForm() {
   const [state, formAction, isPending] = useActionState(createJenisAlsintan, initialActionState);
 
   return (
-    <form action={formAction} className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+    <form
+      action={formAction}
+      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4"
+    >
       <div className="flex-1 min-w-[160px]">
         <label className="mb-1 block text-sm font-medium text-gray-700">Nama Jenis</label>
         <input
           name="nama_jenis"
           required
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+      <div className="w-24">
+        <label className="mb-1 block text-sm font-medium text-gray-700">Kode Singkat</label>
+        <input
+          name="kode_singkat"
+          required
+          maxLength={4}
+          placeholder="TR2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
       <div className="flex-1 min-w-[160px]">
@@ -68,7 +82,7 @@ function EditRow({ jenis, onCancel }: { jenis: JenisAlsintan; onCancel: () => vo
 
   return (
     <tr>
-      <td className="px-4 py-3" colSpan={3}>
+      <td className="px-4 py-3" colSpan={4}>
         <form action={formAction} className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[160px]">
             <input
@@ -76,6 +90,15 @@ function EditRow({ jenis, onCancel }: { jenis: JenisAlsintan; onCancel: () => vo
               defaultValue={jenis.nama_jenis}
               required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div className="w-24">
+            <input
+              name="kode_singkat"
+              defaultValue={jenis.kode_singkat}
+              required
+              maxLength={4}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <div className="flex-1 min-w-[160px]">
@@ -134,6 +157,7 @@ export default function JenisAlsintanManager({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Nama Jenis</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Kode</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Ikon</th>
               {isAdmin && <th className="px-4 py-3 text-right font-medium text-gray-600">Aksi</th>}
             </tr>
@@ -145,6 +169,7 @@ export default function JenisAlsintanManager({
               ) : (
                 <tr key={jenis.id}>
                   <td className="px-4 py-3 font-medium text-gray-900">{jenis.nama_jenis}</td>
+                  <td className="px-4 py-3 text-gray-700">{jenis.kode_singkat}</td>
                   <td className="px-4 py-3 text-gray-700">{jenis.kode_ikon}</td>
                   {isAdmin && (
                     <td className="space-x-2 px-4 py-3 text-right">
@@ -168,7 +193,7 @@ export default function JenisAlsintanManager({
             )}
             {initialData.length === 0 && (
               <tr>
-                <td colSpan={isAdmin ? 3 : 2} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={isAdmin ? 4 : 3} className="px-4 py-8 text-center text-gray-500">
                   Belum ada jenis alsintan.
                 </td>
               </tr>
