@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
+import RiwayatMutasi from "@/components/riwayat/RiwayatMutasi";
+import RiwayatPemanfaatan from "@/components/riwayat/RiwayatPemanfaatan";
+import RiwayatServis from "@/components/riwayat/RiwayatServis";
+import RiwayatMonev from "@/components/riwayat/RiwayatMonev";
 
 interface AlsintanDetail {
   id: string;
@@ -63,6 +67,61 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
 
   if (!raw) notFound();
   const alsintan = raw as unknown as AlsintanDetail;
+
+  const [
+    { data: mutasiRaw },
+    { data: pemanfaatanRaw },
+    { data: servisRaw },
+    { data: monevRaw },
+    { data: penerimaRaw },
+  ] = await Promise.all([
+    supabase
+      .from("mutasi")
+      .select(
+        "id, tanggal, no_surat, keterangan, penerima_lama:penerima!id_penerima_lama(nama_kelompok), penerima_baru:penerima!id_penerima_baru(nama_kelompok)"
+      )
+      .eq("id_alsintan", id)
+      .order("tanggal", { ascending: false }),
+    supabase
+      .from("pemanfaatan")
+      .select("id, tanggal, luas_layanan_ha, komoditas, operator")
+      .eq("id_alsintan", id)
+      .order("tanggal", { ascending: false }),
+    supabase
+      .from("servis")
+      .select("id, tanggal, kerusakan, biaya, sparepart, status")
+      .eq("id_alsintan", id)
+      .order("tanggal", { ascending: false }),
+    supabase
+      .from("monev")
+      .select("id, tanggal_kunjungan, kondisi_terverifikasi, catatan, foto_url, petugas")
+      .eq("id_alsintan", id)
+      .order("tanggal_kunjungan", { ascending: false }),
+    supabase
+      .from("penerima")
+      .select("id, nama_kelompok, master_desa(nama_desa, master_kecamatan(nama_kecamatan))")
+      .order("nama_kelompok"),
+  ]);
+
+  interface PenerimaJoinRow {
+    id: string;
+    nama_kelompok: string;
+    master_desa: { nama_desa: string; master_kecamatan: { nama_kecamatan: string } | null } | null;
+  }
+
+  interface MutasiJoinRow {
+    id: string;
+    tanggal: string;
+    no_surat: string | null;
+    keterangan: string | null;
+    penerima_lama: { nama_kelompok: string } | null;
+    penerima_baru: { nama_kelompok: string } | null;
+  }
+  const mutasiEntries = (mutasiRaw ?? []) as unknown as MutasiJoinRow[];
+  const penerimaOptions = ((penerimaRaw ?? []) as unknown as PenerimaJoinRow[]).map((p) => ({
+    id: p.id,
+    label: `${p.nama_kelompok} (${p.master_desa?.nama_desa ?? "-"}, ${p.master_desa?.master_kecamatan?.nama_kecamatan ?? "-"})`,
+  }));
 
   return (
     <main className="mx-auto max-w-3xl p-6">
@@ -147,7 +206,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       )}
 
       {canWrite && (
-        <div className="flex gap-2">
+        <div className="mb-6 flex gap-2">
           <Link
             href={`/alsintan/${id}/edit`}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -157,6 +216,24 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
           {canDelete && <DeleteAlsintanButton id={id} idUnit={alsintan.id_unit} />}
         </div>
       )}
+
+      <div className="space-y-6">
+        <RiwayatMutasi
+          idAlsintan={id}
+          entries={mutasiEntries}
+          penerimaOptions={penerimaOptions}
+          canWrite={canWrite}
+          canDelete={canDelete}
+        />
+        <RiwayatPemanfaatan
+          idAlsintan={id}
+          entries={pemanfaatanRaw ?? []}
+          canWrite={canWrite}
+          canDelete={canDelete}
+        />
+        <RiwayatServis idAlsintan={id} entries={servisRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
+        <RiwayatMonev idAlsintan={id} entries={monevRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
+      </div>
     </main>
   );
 }
