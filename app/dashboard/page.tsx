@@ -37,6 +37,9 @@ export default async function DashboardPage() {
       </p>
 
       <div className="flex flex-col gap-2">
+        <Link href="/alsintan" className="text-sm text-blue-600 hover:underline">
+          Kelola Alsintan →
+        </Link>
         <Link href="/penerima" className="text-sm text-blue-600 hover:underline">
           Kelola Penerima (Kelompok Tani) →
         </Link>
