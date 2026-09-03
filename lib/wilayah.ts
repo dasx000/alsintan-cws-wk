@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/get-current-profile";
 
 // Kecamatan+desa itu data tetap (15 kecamatan, 227 desa) jadi aman diambil
 // sekaligus dalam satu fetch (bukan select tak terbatas pada tabel yang
@@ -7,17 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 export async function getKecamatanDesaForProfile() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, id_kecamatan_wilayah")
-    .eq("id", user!.id)
-    .single();
-
-  const [{ data: allKecamatan }, { data: allDesa }] = await Promise.all([
+  const [{ profile }, { data: allKecamatan }, { data: allDesa }] = await Promise.all([
+    getCurrentProfile(),
     supabase.from("master_kecamatan").select("id_kecamatan, nama_kecamatan").order("nama_kecamatan"),
     supabase.from("master_desa").select("id_desa, id_kecamatan, nama_desa").order("nama_desa"),
   ]);

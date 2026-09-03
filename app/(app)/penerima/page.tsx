@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/get-current-profile";
 import DeletePenerimaButton from "@/components/DeletePenerimaButton";
 
 const PAGE_SIZE = 20;
@@ -30,22 +31,20 @@ export default async function PenerimaPage({
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
+  const [{ profile }, { data: penerimaListRaw, count }] = await Promise.all([
+    getCurrentProfile(),
+    supabase
+      .from("penerima")
+      .select(
+        "id, nama_kelompok, jenis_kelompok, nama_ketua, luas_garapan_ha, master_desa(nama_desa, master_kecamatan(nama_kecamatan))",
+        { count: "exact" }
+      )
+      .order("nama_kelompok")
+      .range(from, to),
+  ]);
+
   const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
   const canDelete = profile?.role === "admin";
-
-  const { data: penerimaListRaw, count } = await supabase
-    .from("penerima")
-    .select(
-      "id, nama_kelompok, jenis_kelompok, nama_ketua, luas_garapan_ha, master_desa(nama_desa, master_kecamatan(nama_kecamatan))",
-      { count: "exact" }
-    )
-    .order("nama_kelompok")
-    .range(from, to);
-
   const penerimaList = (penerimaListRaw ?? []) as unknown as PenerimaRow[];
   const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
 

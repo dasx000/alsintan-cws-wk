@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Download, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 
 const PAGE_SIZE = 20;
@@ -29,20 +30,19 @@ export default async function AlsintanPage({
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
-  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
+  const [{ profile }, { data: rawList, count }] = await Promise.all([
+    getCurrentProfile(),
+    supabase
+      .from("alsintan")
+      .select(
+        "id, id_unit, tahun_pengadaan, kondisi, merk, tipe, master_jenis_alsintan(nama_jenis), penerima(nama_kelompok)",
+        { count: "exact" }
+      )
+      .order("created_at", { ascending: false })
+      .range(from, to),
+  ]);
 
-  const { data: rawList, count } = await supabase
-    .from("alsintan")
-    .select(
-      "id, id_unit, tahun_pengadaan, kondisi, merk, tipe, master_jenis_alsintan(nama_jenis), penerima(nama_kelompok)",
-      { count: "exact" }
-    )
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
 
   const alsintanList = (rawList ?? []) as unknown as AlsintanRow[];
   const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;

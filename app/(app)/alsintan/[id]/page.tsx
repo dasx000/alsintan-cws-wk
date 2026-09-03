@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
 import RiwayatMutasi from "@/components/riwayat/RiwayatMutasi";
@@ -47,35 +48,27 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
-  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
-  const canDelete = profile?.role === "admin";
-
-  const { data: raw } = await supabase
-    .from("alsintan")
-    .select(
-      `id, id_unit, merk, tipe, no_rangka, no_mesin, tahun_pengadaan, no_bast, tanggal_bast,
-       nilai_aset, kondisi, catatan, foto_url, latitude, longitude,
-       master_jenis_alsintan(nama_jenis),
-       master_sumber_dana(nama_sumber),
-       penerima(nama_kelompok, nama_ketua, master_desa(nama_desa, master_kecamatan(nama_kecamatan)))`
-    )
-    .eq("id", id)
-    .single();
-
-  if (!raw) notFound();
-  const alsintan = raw as unknown as AlsintanDetail;
-
   const [
+    { profile },
+    { data: raw },
     { data: mutasiRaw },
     { data: pemanfaatanRaw },
     { data: servisRaw },
     { data: monevRaw },
     { data: penerimaRaw },
   ] = await Promise.all([
+    getCurrentProfile(),
+    supabase
+      .from("alsintan")
+      .select(
+        `id, id_unit, merk, tipe, no_rangka, no_mesin, tahun_pengadaan, no_bast, tanggal_bast,
+         nilai_aset, kondisi, catatan, foto_url, latitude, longitude,
+         master_jenis_alsintan(nama_jenis),
+         master_sumber_dana(nama_sumber),
+         penerima(nama_kelompok, nama_ketua, master_desa(nama_desa, master_kecamatan(nama_kecamatan)))`
+      )
+      .eq("id", id)
+      .single(),
     supabase
       .from("mutasi")
       .select(
@@ -103,6 +96,11 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       .select("id, nama_kelompok, master_desa(nama_desa, master_kecamatan(nama_kecamatan))")
       .order("nama_kelompok"),
   ]);
+
+  if (!raw) notFound();
+  const alsintan = raw as unknown as AlsintanDetail;
+  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
+  const canDelete = profile?.role === "admin";
 
   interface PenerimaJoinRow {
     id: string;

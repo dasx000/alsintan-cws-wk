@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, Boxes, Gauge, MapPinned } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, KONDISI_OPTIONS, kondisiLabel } from "@/lib/kondisi-alsintan";
 
 interface PerJenis {
@@ -31,18 +32,10 @@ interface PerluPerhatian {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nama, role")
-    .eq("id", user!.id)
-    .single();
-
-  const [{ data: perJenis }, { data: perKondisi }, { data: perKecamatan }, { data: perluPerhatian }] =
+  const [{ profile }, { data: perJenis }, { data: perKondisi }, { data: perKecamatan }, { data: perluPerhatian }] =
     await Promise.all([
+      getCurrentProfile(),
       supabase.from("stat_alsintan_per_jenis").select("*"),
       supabase.from("stat_alsintan_per_kondisi").select("*"),
       supabase.from("stat_alsintan_per_kecamatan").select("*"),
@@ -62,7 +55,7 @@ export default async function DashboardPage() {
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         <p className="text-sm text-gray-500">
-          Selamat datang, {profile?.nama || user?.email} · Total {totalUnit} unit alsintan terdata
+          Selamat datang, {profile?.nama || profile?.email} · Total {totalUnit} unit alsintan terdata
         </p>
       </div>
 
