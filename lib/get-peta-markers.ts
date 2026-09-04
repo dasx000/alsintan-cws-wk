@@ -8,11 +8,10 @@ interface AlsintanMapRow {
   tahun_pengadaan: number;
   latitude: number;
   longitude: number;
-  master_jenis_alsintan: { nama_jenis: string; kode_ikon: string } | null;
-  penerima: {
-    nama_kelompok: string;
-    master_desa: { nama_desa: string; id_kecamatan: string; master_kecamatan: { nama_kecamatan: string } | null } | null;
-  } | null;
+  penerima: string | null;
+  desa: string | null;
+  kecamatan: string | null;
+  master_jenis_alsintan: { nama_jenis: string; kategori: string } | null;
 }
 
 export interface PetaFilters {
@@ -29,15 +28,11 @@ export async function getPetaMarkers(filters: PetaFilters = {}): Promise<PetaMar
   const { jenis, kondisi, kecamatan, tahun, sumber_dana } = filters;
   const supabase = await createClient();
 
-  const penerimaJoin = kecamatan ? "penerima!inner" : "penerima";
-  const desaJoin = kecamatan ? "master_desa!inner" : "master_desa";
-
   let query = supabase
     .from("alsintan")
     .select(
-      `id, id_unit, kondisi, tahun_pengadaan, latitude, longitude,
-       master_jenis_alsintan(nama_jenis, kode_ikon),
-       ${penerimaJoin}(nama_kelompok, ${desaJoin}(nama_desa, id_kecamatan, master_kecamatan(nama_kecamatan)))`
+      `id, id_unit, kondisi, tahun_pengadaan, latitude, longitude, penerima, desa, kecamatan,
+       master_jenis_alsintan(nama_jenis, kategori)`
     )
     .not("latitude", "is", null)
     .not("longitude", "is", null)
@@ -47,7 +42,7 @@ export async function getPetaMarkers(filters: PetaFilters = {}): Promise<PetaMar
   if (kondisi) query = query.eq("kondisi", kondisi);
   if (tahun) query = query.eq("tahun_pengadaan", Number(tahun));
   if (sumber_dana) query = query.eq("id_sumber_dana", sumber_dana);
-  if (kecamatan) query = query.eq("penerima.master_desa.id_kecamatan", kecamatan);
+  if (kecamatan) query = query.eq("kecamatan", kecamatan);
 
   const { data: alsintanRaw } = await query;
   const alsintanList = (alsintanRaw ?? []) as unknown as AlsintanMapRow[];
@@ -56,12 +51,12 @@ export async function getPetaMarkers(filters: PetaFilters = {}): Promise<PetaMar
     id: a.id,
     id_unit: a.id_unit,
     kondisi: a.kondisi,
-    kode_ikon: a.master_jenis_alsintan?.kode_ikon ?? "generik",
+    kategori: a.master_jenis_alsintan?.kategori ?? "pra_panen",
     nama_jenis: a.master_jenis_alsintan?.nama_jenis ?? "-",
     latitude: a.latitude,
     longitude: a.longitude,
-    nama_kelompok: a.penerima?.nama_kelompok ?? null,
-    nama_desa: a.penerima?.master_desa?.nama_desa ?? null,
-    nama_kecamatan: a.penerima?.master_desa?.master_kecamatan?.nama_kecamatan ?? null,
+    nama_kelompok: a.penerima,
+    nama_desa: a.desa,
+    nama_kecamatan: a.kecamatan,
   }));
 }

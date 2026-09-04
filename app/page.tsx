@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingHero from "@/components/landing/LandingHero";
@@ -12,10 +11,6 @@ export default async function RootPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect("/dashboard");
-  }
 
   const { data: stats, error: statsError } = await supabase
     .rpc("get_landing_stats")
@@ -35,7 +30,7 @@ export default async function RootPage() {
 
   return (
     <div>
-      <LandingNavbar />
+      <LandingNavbar loggedIn={!!user} />
       <LandingHero totalAlsintan={stats?.total_alsintan ?? 0} />
       <LandingDataSection yearly={(yearly as YearlyDatum[] | null) ?? []} />
       <LandingSebaranSection markers={markers} />

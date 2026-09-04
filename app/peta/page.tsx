@@ -42,7 +42,7 @@ export default async function PetaSebaranPage({
 
         <PetaFilter
           jenisOptions={(jenisList ?? []).map((j) => ({ value: j.id, label: j.nama_jenis }))}
-          kecamatanOptions={(kecamatanList ?? []).map((k) => ({ value: k.id_kecamatan, label: k.nama_kecamatan }))}
+          kecamatanOptions={(kecamatanList ?? []).map((k) => ({ value: k.nama_kecamatan, label: k.nama_kecamatan }))}
           sumberDanaOptions={(sumberDanaList ?? []).map((s) => ({ value: s.id, label: s.nama_sumber }))}
           tahunOptions={tahunOptions}
         />

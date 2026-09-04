@@ -2,18 +2,19 @@ import { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-// Format: ALS-{kode 6 digit kecamatan}-{kode singkat jenis}-{tahun}-{urut}.
-// Urut reset per kombinasi kecamatan+jenis+tahun, ditentukan dari id_unit
-// terakhir yang match prefix yang sama (bukan sequence Postgres terpisah --
-// cukup untuk skala penggunaan beberapa penyuluh, race condition langka
-// ditangani lewat UNIQUE constraint + pesan retry di action pemanggilnya).
+// Format: ALS-{kode 6 digit kecamatan}-{kode kategori}-{tahun}-{urut}, kode
+// kategori PP (pra panen) / PS (pasca panen). Urut reset per kombinasi
+// kecamatan+kategori+tahun, ditentukan dari id_unit terakhir yang match
+// prefix yang sama (bukan sequence Postgres terpisah -- cukup untuk skala
+// penggunaan beberapa penyuluh, race condition langka ditangani lewat
+// UNIQUE constraint + pesan retry di action pemanggilnya).
 export async function generateIdUnit(
   supabase: SupabaseServerClient,
   idKecamatan: string,
-  kodeSingkatJenis: string,
+  kodeKategori: string,
   tahun: number
 ): Promise<string> {
-  const prefix = `ALS-${idKecamatan}-${kodeSingkatJenis}-${tahun}-`;
+  const prefix = `ALS-${idKecamatan}-${kodeKategori}-${tahun}-`;
 
   const { data, error } = await supabase
     .from("alsintan")

@@ -17,7 +17,7 @@ const NAV_ITEMS = [
 // Transparan mengambang di atas hero gelap saat di paling atas (seperti
 // SIMANTAN), baru berubah jadi bar putih solid setelah discroll -- supaya
 // tetap kebaca saat pengunjung sampai ke seksi terang di bawah hero.
-export default function LandingNavbar() {
+export default function LandingNavbar({ loggedIn = false }: { loggedIn?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [activeHref, setActiveHref] = useState("#beranda");
 
@@ -105,7 +105,7 @@ export default function LandingNavbar() {
         </nav>
 
         <Link
-          href="/login"
+          href={loggedIn ? "/dashboard" : "/login"}
           className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-5 py-2 text-sm font-medium transition-all duration-300 ${
             scrolled
               ? "border-green-600 text-green-600 hover:bg-green-600 hover:text-white hover:shadow-md hover:shadow-green-600/25"
@@ -113,7 +113,7 @@ export default function LandingNavbar() {
           }`}
         >
           <User size={15} />
-          Masuk
+          {loggedIn ? "Dashboard" : "Masuk"}
         </Link>
       </div>
     </header>

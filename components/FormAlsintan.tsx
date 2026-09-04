@@ -36,25 +36,16 @@ interface DesaOption {
   nama_desa: string;
 }
 
-interface PenerimaOption {
-  id: string;
-  nama_kelompok: string;
-  id_desa: string;
-}
-
 export interface AlsintanInitialData {
   id_jenis: string;
-  merk: string | null;
-  tipe: string | null;
-  no_rangka: string | null;
-  no_mesin: string | null;
   tahun_pengadaan: number;
   id_sumber_dana: string | null;
   no_bast: string | null;
   tanggal_bast: string | null;
-  nilai_aset: number | null;
   kondisi: string;
-  id_penerima_saat_ini: string;
+  penerima: string | null;
+  desa: string | null;
+  kecamatan: string | null;
   catatan: string | null;
   foto_url: string | null;
   latitude: number | null;
@@ -69,7 +60,6 @@ export default function FormAlsintan({
   sumberDanaList,
   kecamatanList,
   desaList,
-  penerimaList,
   initialData,
   action,
   submitLabel,
@@ -78,29 +68,31 @@ export default function FormAlsintan({
   sumberDanaList: SumberDanaOption[];
   kecamatanList: KecamatanOption[];
   desaList: DesaOption[];
-  penerimaList: PenerimaOption[];
   initialData?: AlsintanInitialData;
   action: (prevState: AlsintanActionState, formData: FormData) => Promise<AlsintanActionState>;
   submitLabel: string;
 }) {
-  const initialPenerima = initialData
-    ? penerimaList.find((p) => p.id === initialData.id_penerima_saat_ini)
+  const initialKecamatan = initialData
+    ? kecamatanList.find((k) => k.nama_kecamatan === initialData.kecamatan)
     : undefined;
-  const initialDesaOf = initialPenerima ? desaList.find((d) => d.id_desa === initialPenerima.id_desa) : undefined;
 
   const [selectedKecamatan, setSelectedKecamatan] = useState(
-    initialDesaOf?.id_kecamatan ?? kecamatanList[0]?.id_kecamatan ?? ""
+    initialKecamatan?.id_kecamatan ?? kecamatanList[0]?.id_kecamatan ?? ""
   );
-  const [selectedDesa, setSelectedDesa] = useState(initialPenerima?.id_desa ?? "");
-  const [selectedPenerima, setSelectedPenerima] = useState(initialData?.id_penerima_saat_ini ?? "");
+
+  const initialDesa = initialData
+    ? desaList.find((d) => d.nama_desa === initialData.desa && d.id_kecamatan === initialKecamatan?.id_kecamatan)
+    : undefined;
+
+  const [selectedDesa, setSelectedDesa] = useState(initialDesa?.id_desa ?? "");
 
   const [state, formAction, isPending] = useActionState(action, { error: null });
 
   const filteredDesa = desaList.filter((d) => d.id_kecamatan === selectedKecamatan);
   const desaValue = filteredDesa.some((d) => d.id_desa === selectedDesa) ? selectedDesa : "";
 
-  const filteredPenerima = penerimaList.filter((p) => p.id_desa === desaValue);
-  const penerimaValue = filteredPenerima.some((p) => p.id === selectedPenerima) ? selectedPenerima : "";
+  const kecamatanNama = kecamatanList.find((k) => k.id_kecamatan === selectedKecamatan)?.nama_kecamatan ?? "";
+  const desaNama = filteredDesa.find((d) => d.id_desa === desaValue)?.nama_desa ?? "";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.foto_url ?? null);
@@ -159,26 +151,6 @@ export default function FormAlsintan({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Merk</label>
-          <input name="merk" defaultValue={initialData?.merk ?? ""} className={inputClass} />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Tipe</label>
-          <input name="tipe" defaultValue={initialData?.tipe ?? ""} className={inputClass} />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">No. Rangka</label>
-          <input name="no_rangka" defaultValue={initialData?.no_rangka ?? ""} className={inputClass} />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">No. Mesin</label>
-          <input name="no_mesin" defaultValue={initialData?.no_mesin ?? ""} className={inputClass} />
-        </div>
-
-        <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Tahun Pengadaan</label>
           <input
             name="tahun_pengadaan"
@@ -216,20 +188,10 @@ export default function FormAlsintan({
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Nilai Aset (Rp)</label>
-          <input
-            name="nilai_aset"
-            type="number"
-            min={0}
-            defaultValue={initialData?.nilai_aset ?? ""}
-            className={inputClass}
-          />
-        </div>
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="mb-3 text-sm font-medium text-gray-700">Penerima Saat Ini</p>
+        <p className="mb-3 text-sm font-medium text-gray-700">Penerima</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Kecamatan</label>
@@ -238,7 +200,6 @@ export default function FormAlsintan({
               onChange={(e) => {
                 setSelectedKecamatan(e.target.value);
                 setSelectedDesa("");
-                setSelectedPenerima("");
               }}
               className={inputClass}
             >
@@ -252,14 +213,7 @@ export default function FormAlsintan({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Desa</label>
-            <select
-              value={desaValue}
-              onChange={(e) => {
-                setSelectedDesa(e.target.value);
-                setSelectedPenerima("");
-              }}
-              className={inputClass}
-            >
+            <select value={desaValue} onChange={(e) => setSelectedDesa(e.target.value)} className={inputClass}>
               <option value="" disabled>
                 Pilih desa
               </option>
@@ -273,33 +227,11 @@ export default function FormAlsintan({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Kelompok Penerima</label>
-            <select
-              name="id_penerima_saat_ini"
-              value={penerimaValue}
-              onChange={(e) => setSelectedPenerima(e.target.value)}
-              required
-              className={inputClass}
-            >
-              <option value="" disabled>
-                {filteredDesa.length === 0
-                  ? "Pilih desa dulu"
-                  : filteredPenerima.length === 0
-                    ? "Belum ada penerima di desa ini"
-                    : "Pilih kelompok"}
-              </option>
-              {filteredPenerima.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nama_kelompok}
-                </option>
-              ))}
-            </select>
+            <input name="penerima" defaultValue={initialData?.penerima ?? ""} required className={inputClass} />
           </div>
         </div>
-        {filteredPenerima.length === 0 && desaValue && (
-          <p className="mt-2 text-xs text-amber-700">
-            Belum ada data penerima di desa ini. Tambahkan dulu lewat halaman Penerima.
-          </p>
-        )}
+        <input type="hidden" name="kecamatan" value={kecamatanNama} />
+        <input type="hidden" name="desa" value={desaNama} />
       </div>
 
       <div>

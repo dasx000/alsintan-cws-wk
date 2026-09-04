@@ -12,10 +12,8 @@ interface AlsintanRow {
   id_unit: string;
   tahun_pengadaan: number;
   kondisi: string;
-  merk: string | null;
-  tipe: string | null;
   master_jenis_alsintan: { nama_jenis: string } | null;
-  penerima: { nama_kelompok: string } | null;
+  penerima: string | null;
 }
 
 export default async function AlsintanPage({
@@ -35,7 +33,7 @@ export default async function AlsintanPage({
     supabase
       .from("alsintan")
       .select(
-        "id, id_unit, tahun_pengadaan, kondisi, merk, tipe, master_jenis_alsintan(nama_jenis), penerima(nama_kelompok)",
+        "id, id_unit, tahun_pengadaan, kondisi, penerima, master_jenis_alsintan(nama_jenis)",
         { count: "exact" }
       )
       .order("created_at", { ascending: false })
@@ -80,7 +78,6 @@ export default async function AlsintanPage({
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ID Unit</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Jenis</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Merk/Tipe</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Tahun</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Penerima</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Kondisi</th>
@@ -95,11 +92,8 @@ export default async function AlsintanPage({
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-700">{a.master_jenis_alsintan?.nama_jenis ?? "-"}</td>
-                <td className="px-4 py-3 text-gray-700">
-                  {[a.merk, a.tipe].filter(Boolean).join(" / ") || "-"}
-                </td>
                 <td className="px-4 py-3 text-gray-700">{a.tahun_pengadaan}</td>
-                <td className="px-4 py-3 text-gray-700">{a.penerima?.nama_kelompok ?? "-"}</td>
+                <td className="px-4 py-3 text-gray-700">{a.penerima ?? "-"}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
@@ -113,7 +107,7 @@ export default async function AlsintanPage({
             ))}
             {alsintanList.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                   Belum ada data alsintan.
                 </td>
               </tr>

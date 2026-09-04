@@ -2,16 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Map,
-  Tractor,
-  Users,
-  Wrench,
-  UserCog,
-  LogOut,
-  type LucideIcon,
-} from "lucide-react";
+import { LayoutDashboard, Map, Tractor, Wrench, UserCog, LogOut, type LucideIcon } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
 
 interface NavItem {
@@ -24,7 +15,6 @@ const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/peta", label: "Peta Sebaran", icon: Map },
   { href: "/alsintan", label: "Alsintan", icon: Tractor },
-  { href: "/penerima", label: "Penerima", icon: Users },
   { href: "/jenis-alsintan", label: "Jenis Alsintan", icon: Wrench },
 ];
 

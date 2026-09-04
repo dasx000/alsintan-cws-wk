@@ -7,25 +7,28 @@ import {
   updateJenisAlsintan,
   type JenisAlsintanActionState,
 } from "@/lib/actions/jenis-alsintan";
-import { IKON_OPTIONS } from "@/lib/jenis-alsintan-icons";
+import { KATEGORI_OPTIONS } from "@/lib/jenis-alsintan-kategori";
 
 interface JenisAlsintan {
   id: string;
   nama_jenis: string;
-  kode_singkat: string;
-  kode_ikon: string;
+  kategori: string;
 }
 
 const initialActionState: JenisAlsintanActionState = { error: null };
 
-function IkonSelect({ name, defaultValue }: { name: string; defaultValue?: string }) {
+const KATEGORI_LABEL: Record<string, string> = Object.fromEntries(
+  KATEGORI_OPTIONS.map((o) => [o.value, o.label])
+);
+
+function KategoriSelect({ name, defaultValue }: { name: string; defaultValue?: string }) {
   return (
     <select
       name={name}
-      defaultValue={defaultValue ?? IKON_OPTIONS[0].value}
+      defaultValue={defaultValue ?? KATEGORI_OPTIONS[0].value}
       className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
     >
-      {IKON_OPTIONS.map((opt) => (
+      {KATEGORI_OPTIONS.map((opt) => (
         <option key={opt.value} value={opt.value}>
           {opt.label}
         </option>
@@ -50,19 +53,9 @@ function AddForm() {
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
-      <div className="w-24">
-        <label className="mb-1 block text-sm font-medium text-gray-700">Kode Singkat</label>
-        <input
-          name="kode_singkat"
-          required
-          maxLength={4}
-          placeholder="TR2"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-        />
-      </div>
       <div className="flex-1 min-w-[160px]">
-        <label className="mb-1 block text-sm font-medium text-gray-700">Ikon</label>
-        <IkonSelect name="kode_ikon" />
+        <label className="mb-1 block text-sm font-medium text-gray-700">Kategori</label>
+        <KategoriSelect name="kategori" />
       </div>
       <button
         type="submit"
@@ -95,19 +88,9 @@ function EditForm({ jenis, onCancel }: { jenis: JenisAlsintan; onCancel: () => v
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
-      <div className="w-24">
-        <label className="mb-1 block text-sm font-medium text-gray-700">Kode Singkat</label>
-        <input
-          name="kode_singkat"
-          defaultValue={jenis.kode_singkat}
-          required
-          maxLength={4}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-        />
-      </div>
       <div className="flex-1 min-w-[160px]">
-        <label className="mb-1 block text-sm font-medium text-gray-700">Ikon</label>
-        <IkonSelect name="kode_ikon" defaultValue={jenis.kode_ikon} />
+        <label className="mb-1 block text-sm font-medium text-gray-700">Kategori</label>
+        <KategoriSelect name="kategori" defaultValue={jenis.kategori} />
       </div>
       <button
         type="submit"
@@ -166,8 +149,7 @@ export default function JenisAlsintanManager({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Nama Jenis</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Kode</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Ikon</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Kategori</th>
               {isAdmin && <th className="px-4 py-3 text-right font-medium text-gray-600">Aksi</th>}
             </tr>
           </thead>
@@ -175,8 +157,7 @@ export default function JenisAlsintanManager({
             {initialData.map((jenis) => (
               <tr key={jenis.id} className={editingId === jenis.id ? "bg-green-50/50" : undefined}>
                 <td className="px-4 py-3 font-medium text-gray-900">{jenis.nama_jenis}</td>
-                <td className="px-4 py-3 text-gray-700">{jenis.kode_singkat}</td>
-                <td className="px-4 py-3 text-gray-700">{jenis.kode_ikon}</td>
+                <td className="px-4 py-3 text-gray-700">{KATEGORI_LABEL[jenis.kategori] ?? jenis.kategori}</td>
                 {isAdmin && (
                   <td className="space-x-2 px-4 py-3 text-right">
                     <button
@@ -198,7 +179,7 @@ export default function JenisAlsintanManager({
             ))}
             {initialData.length === 0 && (
               <tr>
-                <td colSpan={isAdmin ? 4 : 3} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={isAdmin ? 3 : 2} className="px-4 py-8 text-center text-gray-500">
                   Belum ada jenis alsintan.
                 </td>
               </tr>

@@ -7,7 +7,7 @@ export default async function JenisAlsintanPage() {
 
   const [{ profile }, { data: jenisList }] = await Promise.all([
     getCurrentProfile(),
-    supabase.from("master_jenis_alsintan").select("id, nama_jenis, kode_singkat, kode_ikon").order("nama_jenis"),
+    supabase.from("master_jenis_alsintan").select("id, nama_jenis, kategori").order("nama_jenis"),
   ]);
 
   return (

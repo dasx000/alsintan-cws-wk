@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
-import RiwayatMutasi from "@/components/riwayat/RiwayatMutasi";
 import RiwayatPemanfaatan from "@/components/riwayat/RiwayatPemanfaatan";
 import RiwayatServis from "@/components/riwayat/RiwayatServis";
 import RiwayatMonev from "@/components/riwayat/RiwayatMonev";
@@ -13,26 +12,19 @@ import RiwayatMonev from "@/components/riwayat/RiwayatMonev";
 interface AlsintanDetail {
   id: string;
   id_unit: string;
-  merk: string | null;
-  tipe: string | null;
-  no_rangka: string | null;
-  no_mesin: string | null;
   tahun_pengadaan: number;
   no_bast: string | null;
   tanggal_bast: string | null;
-  nilai_aset: number | null;
   kondisi: string;
+  penerima: string | null;
+  desa: string | null;
+  kecamatan: string | null;
   catatan: string | null;
   foto_url: string | null;
   latitude: number | null;
   longitude: number | null;
   master_jenis_alsintan: { nama_jenis: string } | null;
   master_sumber_dana: { nama_sumber: string } | null;
-  penerima: {
-    nama_kelompok: string;
-    nama_ketua: string | null;
-    master_desa: { nama_desa: string; master_kecamatan: { nama_kecamatan: string } | null } | null;
-  } | null;
 }
 
 function Field({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -48,79 +40,40 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const supabase = await createClient();
 
-  const [
-    { profile },
-    { data: raw },
-    { data: mutasiRaw },
-    { data: pemanfaatanRaw },
-    { data: servisRaw },
-    { data: monevRaw },
-    { data: penerimaRaw },
-  ] = await Promise.all([
-    getCurrentProfile(),
-    supabase
-      .from("alsintan")
-      .select(
-        `id, id_unit, merk, tipe, no_rangka, no_mesin, tahun_pengadaan, no_bast, tanggal_bast,
-         nilai_aset, kondisi, catatan, foto_url, latitude, longitude,
-         master_jenis_alsintan(nama_jenis),
-         master_sumber_dana(nama_sumber),
-         penerima(nama_kelompok, nama_ketua, master_desa(nama_desa, master_kecamatan(nama_kecamatan)))`
-      )
-      .eq("id", id)
-      .single(),
-    supabase
-      .from("mutasi")
-      .select(
-        "id, tanggal, no_surat, keterangan, penerima_lama:penerima!id_penerima_lama(nama_kelompok), penerima_baru:penerima!id_penerima_baru(nama_kelompok)"
-      )
-      .eq("id_alsintan", id)
-      .order("tanggal", { ascending: false }),
-    supabase
-      .from("pemanfaatan")
-      .select("id, tanggal, luas_layanan_ha, komoditas, operator")
-      .eq("id_alsintan", id)
-      .order("tanggal", { ascending: false }),
-    supabase
-      .from("servis")
-      .select("id, tanggal, kerusakan, biaya, sparepart, status")
-      .eq("id_alsintan", id)
-      .order("tanggal", { ascending: false }),
-    supabase
-      .from("monev")
-      .select("id, tanggal_kunjungan, kondisi_terverifikasi, catatan, foto_url, petugas")
-      .eq("id_alsintan", id)
-      .order("tanggal_kunjungan", { ascending: false }),
-    supabase
-      .from("penerima")
-      .select("id, nama_kelompok, master_desa(nama_desa, master_kecamatan(nama_kecamatan))")
-      .order("nama_kelompok"),
-  ]);
+  const [{ profile }, { data: raw }, { data: pemanfaatanRaw }, { data: servisRaw }, { data: monevRaw }] =
+    await Promise.all([
+      getCurrentProfile(),
+      supabase
+        .from("alsintan")
+        .select(
+          `id, id_unit, tahun_pengadaan, no_bast, tanggal_bast,
+           kondisi, penerima, desa, kecamatan, catatan, foto_url, latitude, longitude,
+           master_jenis_alsintan(nama_jenis),
+           master_sumber_dana(nama_sumber)`
+        )
+        .eq("id", id)
+        .single(),
+      supabase
+        .from("pemanfaatan")
+        .select("id, tanggal, luas_layanan_ha, komoditas, operator")
+        .eq("id_alsintan", id)
+        .order("tanggal", { ascending: false }),
+      supabase
+        .from("servis")
+        .select("id, tanggal, kerusakan, biaya, sparepart, status")
+        .eq("id_alsintan", id)
+        .order("tanggal", { ascending: false }),
+      supabase
+        .from("monev")
+        .select("id, tanggal_kunjungan, kondisi_terverifikasi, catatan, foto_url, petugas")
+        .eq("id_alsintan", id)
+        .order("tanggal_kunjungan", { ascending: false }),
+    ]);
 
   if (!raw) notFound();
   const alsintan = raw as unknown as AlsintanDetail;
   const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
   const canDelete = profile?.role === "admin";
-
-  interface PenerimaJoinRow {
-    id: string;
-    nama_kelompok: string;
-    master_desa: { nama_desa: string; master_kecamatan: { nama_kecamatan: string } | null } | null;
-  }
-
-  interface MutasiJoinRow {
-    id: string;
-    tanggal: string;
-    no_surat: string | null;
-    keterangan: string | null;
-    penerima_lama: { nama_kelompok: string } | null;
-    penerima_baru: { nama_kelompok: string } | null;
-  }
-  const mutasiEntries = (mutasiRaw ?? []) as unknown as MutasiJoinRow[];
-  const penerimaOptions = ((penerimaRaw ?? []) as unknown as PenerimaJoinRow[]).map((p) => ({
-    id: p.id,
-    label: `${p.nama_kelompok} (${p.master_desa?.nama_desa ?? "-"}, ${p.master_desa?.master_kecamatan?.nama_kecamatan ?? "-"})`,
-  }));
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -152,32 +105,19 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       )}
 
       <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-3">
-        <Field label="Merk" value={alsintan.merk} />
-        <Field label="Tipe" value={alsintan.tipe} />
         <Field label="Tahun Pengadaan" value={alsintan.tahun_pengadaan} />
-        <Field label="No. Rangka" value={alsintan.no_rangka} />
-        <Field label="No. Mesin" value={alsintan.no_mesin} />
         <Field label="Sumber Dana" value={alsintan.master_sumber_dana?.nama_sumber} />
         <Field label="No. BAST" value={alsintan.no_bast} />
         <Field label="Tanggal BAST" value={alsintan.tanggal_bast} />
-        <Field
-          label="Nilai Aset"
-          value={alsintan.nilai_aset != null ? `Rp ${alsintan.nilai_aset.toLocaleString("id-ID")}` : null}
-        />
       </div>
 
       <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-sm font-medium text-gray-700">Penerima Saat Ini</h2>
-        {alsintan.penerima ? (
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Field label="Kelompok" value={alsintan.penerima.nama_kelompok} />
-            <Field label="Ketua" value={alsintan.penerima.nama_ketua} />
-            <Field label="Desa" value={alsintan.penerima.master_desa?.nama_desa} />
-            <Field label="Kecamatan" value={alsintan.penerima.master_desa?.master_kecamatan?.nama_kecamatan} />
-          </dl>
-        ) : (
-          <p className="text-sm text-gray-500">Belum ada penerima.</p>
-        )}
+        <h2 className="mb-2 text-sm font-medium text-gray-700">Penerima</h2>
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <Field label="Kelompok" value={alsintan.penerima} />
+          <Field label="Desa" value={alsintan.desa} />
+          <Field label="Kecamatan" value={alsintan.kecamatan} />
+        </dl>
       </div>
 
       {alsintan.latitude != null && alsintan.longitude != null && (
@@ -217,13 +157,6 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       )}
 
       <div className="space-y-6">
-        <RiwayatMutasi
-          idAlsintan={id}
-          entries={mutasiEntries}
-          penerimaOptions={penerimaOptions}
-          canWrite={canWrite}
-          canDelete={canDelete}
-        />
         <RiwayatPemanfaatan
           idAlsintan={id}
           entries={pemanfaatanRaw ?? []}

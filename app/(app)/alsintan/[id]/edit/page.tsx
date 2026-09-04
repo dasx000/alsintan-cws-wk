@@ -13,7 +13,7 @@ export default async function EditAlsintanPage({ params }: { params: Promise<{ i
   const { data: alsintan } = await supabase
     .from("alsintan")
     .select(
-      "id_jenis, merk, tipe, no_rangka, no_mesin, tahun_pengadaan, id_sumber_dana, no_bast, tanggal_bast, nilai_aset, kondisi, id_penerima_saat_ini, catatan, foto_url, latitude, longitude"
+      "id_jenis, tahun_pengadaan, id_sumber_dana, no_bast, tanggal_bast, kondisi, penerima, desa, kecamatan, catatan, foto_url, latitude, longitude"
     )
     .eq("id", id)
     .single();

@@ -13,7 +13,7 @@ export interface PetaMarkerData {
   id: string;
   id_unit: string;
   kondisi: string;
-  kode_ikon: string;
+  kategori: string;
   nama_jenis: string;
   latitude: number;
   longitude: number;
@@ -24,9 +24,9 @@ export interface PetaMarkerData {
 
 const WAY_KANAN_CENTER: [number, number] = [-4.45, 104.35];
 
-function markerIconFor(kodeIkon: string, kondisi: string) {
+function markerIconFor(kategori: string, kondisi: string) {
   return L.divIcon({
-    html: getMarkerIconHtml(kodeIkon, kondisi),
+    html: getMarkerIconHtml(kategori, kondisi),
     className: "",
     iconSize: [30, 30],
     iconAnchor: [15, 15],
@@ -53,7 +53,7 @@ export default function PetaSebaran({ markers }: { markers: PetaMarkerData[] }) 
       </MapBaseLayers>
       <MarkerClusterGroup chunkedLoading>
         {markers.map((m) => (
-          <Marker key={m.id} position={[m.latitude, m.longitude]} icon={markerIconFor(m.kode_ikon, m.kondisi)}>
+          <Marker key={m.id} position={[m.latitude, m.longitude]} icon={markerIconFor(m.kategori, m.kondisi)}>
             <Popup>
               <div className="text-sm">
                 <p className="font-mono font-semibold">{m.id_unit}</p>

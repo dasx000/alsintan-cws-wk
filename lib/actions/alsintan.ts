@@ -13,16 +13,13 @@ const FOTO_BUCKET = "alsintan-foto";
 
 interface ParsedAlsintan {
   id_jenis: string;
-  id_penerima_saat_ini: string;
-  merk: string | null;
-  tipe: string | null;
-  no_rangka: string | null;
-  no_mesin: string | null;
+  penerima: string;
+  desa: string | null;
+  kecamatan: string;
   tahun_pengadaan: number;
   id_sumber_dana: string | null;
   no_bast: string | null;
   tanggal_bast: string | null;
-  nilai_aset: number | null;
   kondisi: string;
   catatan: string | null;
   latitude: number | null;
@@ -31,18 +28,14 @@ interface ParsedAlsintan {
 
 function parseAlsintanForm(formData: FormData): { error: string | null; data: ParsedAlsintan | null } {
   const id_jenis = formData.get("id_jenis") as string;
-  const id_penerima_saat_ini = formData.get("id_penerima_saat_ini") as string;
-  const merk = (formData.get("merk") as string)?.trim() || null;
-  const tipe = (formData.get("tipe") as string)?.trim() || null;
-  const no_rangka = (formData.get("no_rangka") as string)?.trim() || null;
-  const no_mesin = (formData.get("no_mesin") as string)?.trim() || null;
+  const penerima = (formData.get("penerima") as string)?.trim();
+  const desa = (formData.get("desa") as string)?.trim() || null;
+  const kecamatan = (formData.get("kecamatan") as string)?.trim();
   const tahunRaw = formData.get("tahun_pengadaan") as string;
   const tahun_pengadaan = tahunRaw ? Number(tahunRaw) : NaN;
   const id_sumber_dana = (formData.get("id_sumber_dana") as string) || null;
   const no_bast = (formData.get("no_bast") as string)?.trim() || null;
   const tanggal_bast = (formData.get("tanggal_bast") as string) || null;
-  const nilaiRaw = formData.get("nilai_aset") as string;
-  const nilai_aset = nilaiRaw ? Number(nilaiRaw) : null;
   const kondisi = formData.get("kondisi") as string;
   const catatan = (formData.get("catatan") as string)?.trim() || null;
   const latRaw = formData.get("latitude") as string;
@@ -50,9 +43,9 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
   const latitude = latRaw ? Number(latRaw) : null;
   const longitude = lngRaw ? Number(lngRaw) : null;
 
-  if (!id_jenis || !id_penerima_saat_ini || !tahun_pengadaan || Number.isNaN(tahun_pengadaan) || !kondisi) {
+  if (!id_jenis || !penerima || !kecamatan || !tahun_pengadaan || Number.isNaN(tahun_pengadaan) || !kondisi) {
     return {
-      error: "Jenis alsintan, penerima, tahun pengadaan, dan kondisi wajib diisi.",
+      error: "Jenis alsintan, penerima, kecamatan, tahun pengadaan, dan kondisi wajib diisi.",
       data: null,
     };
   }
@@ -61,16 +54,13 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
     error: null,
     data: {
       id_jenis,
-      id_penerima_saat_ini,
-      merk,
-      tipe,
-      no_rangka,
-      no_mesin,
+      penerima,
+      desa,
+      kecamatan,
       tahun_pengadaan,
       id_sumber_dana,
       no_bast,
       tanggal_bast,
-      nilai_aset,
       kondisi,
       catatan,
       latitude,
@@ -113,25 +103,29 @@ export async function createAlsintan(
 
   const supabase = await createClient();
 
-  const { data: idKecamatan, error: kecErr } = await supabase.rpc("kecamatan_of_penerima", {
-    penerima_id: parsed.data.id_penerima_saat_ini,
-  });
-  if (kecErr || !idKecamatan) {
-    return { error: "Tidak bisa menentukan kecamatan dari penerima yang dipilih." };
+  const { data: kecamatanRow, error: kecErr } = await supabase
+    .from("master_kecamatan")
+    .select("id_kecamatan")
+    .eq("nama_kecamatan", parsed.data.kecamatan)
+    .single();
+  if (kecErr || !kecamatanRow) {
+    return { error: "Kecamatan tidak dikenali." };
   }
 
   const { data: jenis, error: jenisErr } = await supabase
     .from("master_jenis_alsintan")
-    .select("kode_singkat")
+    .select("kategori")
     .eq("id", parsed.data.id_jenis)
     .single();
   if (jenisErr || !jenis) {
     return { error: "Jenis alsintan tidak ditemukan." };
   }
 
+  const kodeKategori = jenis.kategori === "pasca_panen" ? "PS" : "PP";
+
   let idUnit: string;
   try {
-    idUnit = await generateIdUnit(supabase, idKecamatan, jenis.kode_singkat, parsed.data.tahun_pengadaan);
+    idUnit = await generateIdUnit(supabase, kecamatanRow.id_kecamatan, kodeKategori, parsed.data.tahun_pengadaan);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Gagal membuat ID unit." };
   }

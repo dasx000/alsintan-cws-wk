@@ -5,21 +5,15 @@ import { kondisiLabel } from "@/lib/kondisi-alsintan";
 
 interface ExportRow {
   id_unit: string;
-  merk: string | null;
-  tipe: string | null;
-  no_rangka: string | null;
-  no_mesin: string | null;
   tahun_pengadaan: number;
   no_bast: string | null;
   tanggal_bast: string | null;
-  nilai_aset: number | null;
   kondisi: string;
+  penerima: string | null;
+  desa: string | null;
+  kecamatan: string | null;
   master_jenis_alsintan: { nama_jenis: string } | null;
   master_sumber_dana: { nama_sumber: string } | null;
-  penerima: {
-    nama_kelompok: string;
-    master_desa: { nama_desa: string; master_kecamatan: { nama_kecamatan: string } | null } | null;
-  } | null;
 }
 
 export async function GET() {
@@ -28,10 +22,9 @@ export async function GET() {
   const { data, error } = await supabase
     .from("alsintan")
     .select(
-      `id_unit, merk, tipe, no_rangka, no_mesin, tahun_pengadaan, no_bast, tanggal_bast, nilai_aset, kondisi,
+      `id_unit, tahun_pengadaan, no_bast, tanggal_bast, kondisi, penerima, desa, kecamatan,
        master_jenis_alsintan(nama_jenis),
-       master_sumber_dana(nama_sumber),
-       penerima(nama_kelompok, master_desa(nama_desa, master_kecamatan(nama_kecamatan)))`
+       master_sumber_dana(nama_sumber)`
     )
     .order("created_at", { ascending: false });
 
@@ -44,19 +37,14 @@ export async function GET() {
   const csvRows = rows.map((r) => ({
     "ID Unit": r.id_unit,
     Jenis: r.master_jenis_alsintan?.nama_jenis ?? "",
-    Merk: r.merk ?? "",
-    Tipe: r.tipe ?? "",
-    "No. Rangka": r.no_rangka ?? "",
-    "No. Mesin": r.no_mesin ?? "",
     "Tahun Pengadaan": r.tahun_pengadaan,
     "Sumber Dana": r.master_sumber_dana?.nama_sumber ?? "",
     "No. BAST": r.no_bast ?? "",
     "Tanggal BAST": r.tanggal_bast ?? "",
-    "Nilai Aset": r.nilai_aset ?? "",
     Kondisi: kondisiLabel(r.kondisi),
-    Penerima: r.penerima?.nama_kelompok ?? "",
-    Desa: r.penerima?.master_desa?.nama_desa ?? "",
-    Kecamatan: r.penerima?.master_desa?.master_kecamatan?.nama_kecamatan ?? "",
+    Penerima: r.penerima ?? "",
+    Desa: r.desa ?? "",
+    Kecamatan: r.kecamatan ?? "",
   }));
 
   const csv = Papa.unparse(csvRows);

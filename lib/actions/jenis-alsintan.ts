@@ -7,22 +7,21 @@ export interface JenisAlsintanActionState {
   error: string | null;
 }
 
+const VALID_KATEGORI = ["pra_panen", "pasca_panen"];
+
 export async function createJenisAlsintan(
   _prevState: JenisAlsintanActionState,
   formData: FormData
 ): Promise<JenisAlsintanActionState> {
   const nama_jenis = (formData.get("nama_jenis") as string)?.trim();
-  const kode_ikon = formData.get("kode_ikon") as string;
-  const kode_singkat = (formData.get("kode_singkat") as string)?.trim().toUpperCase();
+  const kategori = formData.get("kategori") as string;
 
-  if (!nama_jenis || !kode_ikon || !kode_singkat) {
-    return { error: "Nama jenis, kode singkat, dan ikon wajib diisi." };
+  if (!nama_jenis || !VALID_KATEGORI.includes(kategori)) {
+    return { error: "Nama jenis dan kategori wajib diisi." };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("master_jenis_alsintan")
-    .insert({ nama_jenis, kode_ikon, kode_singkat });
+  const { error } = await supabase.from("master_jenis_alsintan").insert({ nama_jenis, kategori });
 
   if (error) return { error: error.message };
 
@@ -36,17 +35,16 @@ export async function updateJenisAlsintan(
   formData: FormData
 ): Promise<JenisAlsintanActionState> {
   const nama_jenis = (formData.get("nama_jenis") as string)?.trim();
-  const kode_ikon = formData.get("kode_ikon") as string;
-  const kode_singkat = (formData.get("kode_singkat") as string)?.trim().toUpperCase();
+  const kategori = formData.get("kategori") as string;
 
-  if (!nama_jenis || !kode_ikon || !kode_singkat) {
-    return { error: "Nama jenis, kode singkat, dan ikon wajib diisi." };
+  if (!nama_jenis || !VALID_KATEGORI.includes(kategori)) {
+    return { error: "Nama jenis dan kategori wajib diisi." };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("master_jenis_alsintan")
-    .update({ nama_jenis, kode_ikon, kode_singkat })
+    .update({ nama_jenis, kategori })
     .eq("id", id);
 
   if (error) return { error: error.message };
