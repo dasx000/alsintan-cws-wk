@@ -40,6 +40,15 @@ yarn-error.log*
 # hasil download ekspor CSV yang nyasar ke root project
 /*.csv
 
+# dokumen referensi & aset percakapan yang nyasar ke root project (bukan
+# bagian dari aplikasi -- data mentah, juknis, gambar hasil generate AI, dll)
+/*.pdf
+/*.xls
+/*.xlsx
+/*.doc
+/*.docx
+/ChatGPT Image*.png
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

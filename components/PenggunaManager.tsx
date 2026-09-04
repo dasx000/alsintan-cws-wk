@@ -23,7 +23,7 @@ const ROLE_OPTIONS = [
 ];
 
 const inputClass =
-  "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500";
 
 function EditForm({
   user,
@@ -42,9 +42,9 @@ function EditForm({
   return (
     <form
       action={formAction}
-      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4"
+      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-green-200 bg-green-50 p-4"
     >
-      <p className="w-full text-xs font-medium text-blue-700">Mengubah &quot;{user.email}&quot;</p>
+      <p className="w-full text-xs font-medium text-green-700">Mengubah &quot;{user.email}&quot;</p>
       <div className="w-40">
         <label className="mb-1 block text-xs font-medium text-gray-700">Role</label>
         <select name="role" defaultValue={user.role} className={inputClass}>
@@ -69,7 +69,7 @@ function EditForm({
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
       >
         {isPending ? "Menyimpan..." : "Simpan"}
       </button>
@@ -113,7 +113,7 @@ export default function PenggunaManager({
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {users.map((u) => (
-              <tr key={u.id} className={editingId === u.id ? "bg-blue-50/50" : undefined}>
+              <tr key={u.id} className={editingId === u.id ? "bg-green-50/50" : undefined}>
                 <td className="px-4 py-3 text-gray-900">{u.email}</td>
                 <td className="px-4 py-3 text-gray-700">{u.role}</td>
                 <td className="px-4 py-3 text-gray-700">

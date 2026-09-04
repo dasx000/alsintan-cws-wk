@@ -32,26 +32,26 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen">
-      <div className="hidden flex-1 flex-col justify-between bg-blue-700 p-10 text-white lg:flex">
+      <div className="hidden flex-1 flex-col justify-between bg-green-700 p-10 text-white lg:flex">
         <div className="flex items-center gap-2">
           <Tractor size={22} />
-          <span className="font-semibold">CWS Way Kanan</span>
+          <span className="font-semibold">AlsinTrack</span>
         </div>
         <div>
           <h2 className="text-2xl font-semibold">Monitoring Alsintan Bantuan Pemerintah</h2>
-          <p className="mt-2 max-w-md text-blue-100">
+          <p className="mt-2 max-w-md text-green-100">
             Database unit, riwayat pemanfaatan &amp; servis, serta peta sebaran alat mesin pertanian se-Kabupaten
             Way Kanan.
           </p>
         </div>
-        <p className="text-xs text-blue-200">CWS Kabupaten Way Kanan</p>
+        <p className="text-xs text-green-200">AlsinTrack</p>
       </div>
 
       <div className="flex flex-1 items-center justify-center bg-gray-50 p-6">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center gap-2 lg:hidden">
-            <Tractor size={20} className="text-blue-600" />
-            <span className="font-semibold text-gray-900">CWS Way Kanan</span>
+            <Tractor size={20} className="text-green-600" />
+            <span className="font-semibold text-gray-900">AlsinTrack</span>
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
@@ -69,7 +69,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
               </div>
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
               </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
               >
                 {isSubmitting ? "Memproses..." : "Masuk"}
               </button>

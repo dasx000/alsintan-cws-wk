@@ -27,7 +27,7 @@ export default async function EditAlsintanPage({ params }: { params: Promise<{ i
     <div className="mx-auto max-w-3xl">
       <Link
         href={`/alsintan/${id}`}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-green-600 hover:underline"
       >
         <ArrowLeft size={14} /> Kembali ke detail
       </Link>

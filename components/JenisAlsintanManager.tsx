@@ -23,7 +23,7 @@ function IkonSelect({ name, defaultValue }: { name: string; defaultValue?: strin
     <select
       name={name}
       defaultValue={defaultValue ?? IKON_OPTIONS[0].value}
-      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
     >
       {IKON_OPTIONS.map((opt) => (
         <option key={opt.value} value={opt.value}>
@@ -47,7 +47,7 @@ function AddForm() {
         <input
           name="nama_jenis"
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
       <div className="w-24">
@@ -57,7 +57,7 @@ function AddForm() {
           required
           maxLength={4}
           placeholder="TR2"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
       <div className="flex-1 min-w-[160px]">
@@ -67,7 +67,7 @@ function AddForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
       >
         {isPending ? "Menyimpan..." : "+ Tambah"}
       </button>
@@ -83,16 +83,16 @@ function EditForm({ jenis, onCancel }: { jenis: JenisAlsintan; onCancel: () => v
   return (
     <form
       action={formAction}
-      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4"
+      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-green-200 bg-green-50 p-4"
     >
-      <p className="w-full text-xs font-medium text-blue-700">Mengubah &quot;{jenis.nama_jenis}&quot;</p>
+      <p className="w-full text-xs font-medium text-green-700">Mengubah &quot;{jenis.nama_jenis}&quot;</p>
       <div className="flex-1 min-w-[160px]">
         <label className="mb-1 block text-sm font-medium text-gray-700">Nama Jenis</label>
         <input
           name="nama_jenis"
           defaultValue={jenis.nama_jenis}
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
       <div className="w-24">
@@ -102,7 +102,7 @@ function EditForm({ jenis, onCancel }: { jenis: JenisAlsintan; onCancel: () => v
           defaultValue={jenis.kode_singkat}
           required
           maxLength={4}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
       <div className="flex-1 min-w-[160px]">
@@ -112,7 +112,7 @@ function EditForm({ jenis, onCancel }: { jenis: JenisAlsintan; onCancel: () => v
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
       >
         {isPending ? "Menyimpan..." : "Simpan"}
       </button>
@@ -173,7 +173,7 @@ export default function JenisAlsintanManager({
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {initialData.map((jenis) => (
-              <tr key={jenis.id} className={editingId === jenis.id ? "bg-blue-50/50" : undefined}>
+              <tr key={jenis.id} className={editingId === jenis.id ? "bg-green-50/50" : undefined}>
                 <td className="px-4 py-3 font-medium text-gray-900">{jenis.nama_jenis}</td>
                 <td className="px-4 py-3 text-gray-700">{jenis.kode_singkat}</td>
                 <td className="px-4 py-3 text-gray-700">{jenis.kode_ikon}</td>

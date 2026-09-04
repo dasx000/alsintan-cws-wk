@@ -63,7 +63,7 @@ export default function FormPenerima({
           name="nama_kelompok"
           defaultValue={initialData?.nama_kelompok}
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
 
@@ -72,7 +72,7 @@ export default function FormPenerima({
         <select
           name="jenis_kelompok"
           defaultValue={initialData?.jenis_kelompok ?? JENIS_KELOMPOK_OPTIONS[0].value}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         >
           {JENIS_KELOMPOK_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -87,7 +87,7 @@ export default function FormPenerima({
         <input
           name="nama_ketua"
           defaultValue={initialData?.nama_ketua ?? ""}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
 
@@ -96,7 +96,7 @@ export default function FormPenerima({
         <input
           name="kontak"
           defaultValue={initialData?.kontak ?? ""}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
 
@@ -109,7 +109,7 @@ export default function FormPenerima({
             setSelectedDesa("");
           }}
           disabled={kecamatanList.length <= 1}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:bg-gray-100"
         >
           {kecamatanList.map((k) => (
             <option key={k.id_kecamatan} value={k.id_kecamatan}>
@@ -126,7 +126,7 @@ export default function FormPenerima({
           value={desaValue}
           onChange={(e) => setSelectedDesa(e.target.value)}
           required
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         >
           <option value="" disabled>
             Pilih desa
@@ -147,7 +147,7 @@ export default function FormPenerima({
           step="0.01"
           min={0}
           defaultValue={initialData?.luas_garapan_ha ?? ""}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
       </div>
 
@@ -156,7 +156,7 @@ export default function FormPenerima({
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
       >
         {isPending ? "Menyimpan..." : submitLabel}
       </button>

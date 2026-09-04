@@ -1,12 +1,13 @@
 "use client";
 
-import { MapContainer, Marker, Popup } from "react-leaflet";
+import { LayersControl, MapContainer, Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import Link from "next/link";
 import { getMarkerIconHtml } from "@/lib/marker-icon";
 import { kondisiLabel } from "@/lib/kondisi-alsintan";
 import MapBaseLayers from "@/components/MapBaseLayers";
+import KecamatanChoropleth from "@/components/KecamatanChoropleth";
 
 export interface PetaMarkerData {
   id: string;
@@ -33,10 +34,23 @@ function markerIconFor(kodeIkon: string, kondisi: string) {
   });
 }
 
+function countByKecamatan(markers: PetaMarkerData[]) {
+  const counts = new Map<string, number>();
+  for (const m of markers) {
+    if (!m.nama_kecamatan) continue;
+    counts.set(m.nama_kecamatan, (counts.get(m.nama_kecamatan) ?? 0) + 1);
+  }
+  return counts;
+}
+
 export default function PetaSebaran({ markers }: { markers: PetaMarkerData[] }) {
   return (
     <MapContainer center={WAY_KANAN_CENTER} zoom={10} style={{ height: "70vh", width: "100%" }}>
-      <MapBaseLayers />
+      <MapBaseLayers>
+        <LayersControl.Overlay checked name="Jumlah per Kecamatan">
+          <KecamatanChoropleth counts={countByKecamatan(markers)} />
+        </LayersControl.Overlay>
+      </MapBaseLayers>
       <MarkerClusterGroup chunkedLoading>
         {markers.map((m) => (
           <Marker key={m.id} position={[m.latitude, m.longitude]} icon={markerIconFor(m.kode_ikon, m.kondisi)}>
@@ -51,7 +65,7 @@ export default function PetaSebaran({ markers }: { markers: PetaMarkerData[] }) 
                     {m.nama_desa}, {m.nama_kecamatan}
                   </p>
                 )}
-                <Link href={`/alsintan/${m.id}`} className="text-blue-600 hover:underline">
+                <Link href={`/alsintan/${m.id}`} className="text-green-600 hover:underline">
                   Lihat detail →
                 </Link>
               </div>

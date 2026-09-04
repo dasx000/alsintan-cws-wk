@@ -124,7 +124,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/alsintan" className="mb-4 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+      <Link href="/alsintan" className="mb-4 inline-flex items-center gap-1 text-sm text-green-600 hover:underline">
         <ArrowLeft size={14} /> Kembali ke daftar
       </Link>
 
@@ -189,7 +189,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
               href={`https://www.openstreetmap.org/?mlat=${alsintan.latitude}&mlon=${alsintan.longitude}#map=17/${alsintan.latitude}/${alsintan.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-green-600 hover:underline"
             >
               Lihat di peta →
             </a>

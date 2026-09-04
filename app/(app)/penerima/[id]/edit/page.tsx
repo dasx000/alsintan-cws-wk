@@ -23,7 +23,7 @@ export default async function EditPenerimaPage({ params }: { params: Promise<{ i
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/penerima" className="mb-4 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+      <Link href="/penerima" className="mb-4 inline-flex items-center gap-1 text-sm text-green-600 hover:underline">
         <ArrowLeft size={14} /> Kembali ke daftar
       </Link>
       <h1 className="mb-6 text-xl font-semibold text-gray-900">Edit Penerima</h1>

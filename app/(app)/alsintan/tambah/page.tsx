@@ -9,7 +9,7 @@ export default async function TambahAlsintanPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/alsintan" className="mb-4 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+      <Link href="/alsintan" className="mb-4 inline-flex items-center gap-1 text-sm text-green-600 hover:underline">
         <ArrowLeft size={14} /> Kembali ke daftar
       </Link>
       <h1 className="mb-6 text-xl font-semibold text-gray-900">Tambah Alsintan</h1>

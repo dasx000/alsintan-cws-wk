@@ -50,7 +50,7 @@ export default function AppShell({
       {/* Sidebar (desktop) */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-gray-200 bg-white sm:flex">
         <div className="border-b border-gray-200 px-5 py-4">
-          <p className="text-sm font-semibold text-gray-900">CWS Way Kanan</p>
+          <p className="text-sm font-semibold text-gray-900">AlsinTrack</p>
           <p className="text-xs text-gray-500">Monitoring Alsintan</p>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -62,7 +62,7 @@ export default function AppShell({
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  active ? "bg-green-50 text-green-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
               >
                 <Icon size={16} strokeWidth={2} />
@@ -90,7 +90,7 @@ export default function AppShell({
         {/* Top bar (mobile) */}
         <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:hidden">
           <div>
-            <p className="text-sm font-semibold text-gray-900">CWS Way Kanan</p>
+            <p className="text-sm font-semibold text-gray-900">AlsinTrack</p>
           </div>
           <form action={signOut}>
             <button type="submit" className="text-gray-500">
@@ -107,7 +107,7 @@ export default function AppShell({
                 key={item.href}
                 href={item.href}
                 className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
-                  active ? "bg-blue-50 text-blue-700" : "text-gray-600"
+                  active ? "bg-green-50 text-green-700" : "text-gray-600"
                 }`}
               >
                 <Icon size={14} />

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CWS Kabupaten Way Kanan - Monitoring Alsintan",
+  title: "AlsinTrack - Monitoring Alsintan",
   description: "Database & peta sebaran alsintan bantuan pemerintah Kabupaten Way Kanan",
 };
 
