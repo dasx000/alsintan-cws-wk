@@ -49,3 +49,12 @@ body {
 #kontak {
   scroll-margin-top: 88px;
 }
+
+/* Leaflet memberi tabindex ke tiap polygon (aksesibilitas keyboard), jadi
+   klik memicu outline fokus default browser -- muncul sebagai kotak hitam
+   mengelilingi bounding box polygon. Highlight klik sendiri sudah ditangani
+   lewat style Leaflet (lihat KecamatanChoropleth.tsx), jadi outline browser
+   ini cukup dimatikan. */
+.leaflet-interactive:focus {
+  outline: none;
+}

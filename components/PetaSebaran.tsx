@@ -1,11 +1,10 @@
 "use client";
 
 import { LayersControl, MapContainer, Marker, Popup } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
-import Link from "next/link";
+import { Calendar, Landmark, MapPin, Users, Wheat, Wrench } from "lucide-react";
 import { getMarkerIconHtml } from "@/lib/marker-icon";
-import { kondisiLabel } from "@/lib/kondisi-alsintan";
+import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import MapBaseLayers from "@/components/MapBaseLayers";
 import KecamatanChoropleth from "@/components/KecamatanChoropleth";
 
@@ -15,11 +14,13 @@ export interface PetaMarkerData {
   kondisi: string;
   kategori: string;
   nama_jenis: string;
+  tahun_pengadaan: number;
   latitude: number;
   longitude: number;
   nama_kelompok: string | null;
   nama_desa: string | null;
   nama_kecamatan: string | null;
+  nama_sumber_dana: string | null;
 }
 
 const WAY_KANAN_CENTER: [number, number] = [-4.45, 104.35];
@@ -28,9 +29,9 @@ function markerIconFor(kategori: string, kondisi: string) {
   return L.divIcon({
     html: getMarkerIconHtml(kategori, kondisi),
     className: "",
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-    popupAnchor: [0, -15],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
   });
 }
 
@@ -51,28 +52,66 @@ export default function PetaSebaran({ markers }: { markers: PetaMarkerData[] }) 
           <KecamatanChoropleth counts={countByKecamatan(markers)} />
         </LayersControl.Overlay>
       </MapBaseLayers>
-      <MarkerClusterGroup chunkedLoading>
-        {markers.map((m) => (
+      {markers.map((m) => {
+        const isPascaPanen = m.kategori === "pasca_panen";
+        const KategoriIcon = isPascaPanen ? Wheat : Wrench;
+        return (
           <Marker key={m.id} position={[m.latitude, m.longitude]} icon={markerIconFor(m.kategori, m.kondisi)}>
-            <Popup>
-              <div className="text-sm">
-                <p className="font-mono font-semibold">{m.id_unit}</p>
-                <p>{m.nama_jenis}</p>
-                <p>Kondisi: {kondisiLabel(m.kondisi)}</p>
-                {m.nama_kelompok && <p>Penerima: {m.nama_kelompok}</p>}
-                {m.nama_desa && (
-                  <p>
-                    {m.nama_desa}, {m.nama_kecamatan}
-                  </p>
-                )}
-                <Link href={`/alsintan/${m.id}`} className="text-green-600 hover:underline">
-                  Lihat detail →
-                </Link>
+            <Popup minWidth={220} maxWidth={260}>
+              <div className="-m-1 min-w-[190px]">
+                <div className="flex items-center gap-2.5 border-b border-gray-100 pb-2.5">
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
+                      isPascaPanen ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    <KategoriIcon size={16} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">{m.nama_jenis}</p>
+                  </div>
+                </div>
+
+                <span
+                  className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    KONDISI_BADGE_STYLES[m.kondisi] ?? "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <span className="size-1.5 rounded-full bg-current" />
+                  {kondisiLabel(m.kondisi)}
+                </span>
+
+                <div className="mt-2.5 space-y-1.5 text-xs text-gray-600">
+                  {m.nama_kelompok && (
+                    <div className="flex items-start gap-2">
+                      <Users size={13} className="mt-0.5 shrink-0 text-gray-400" />
+                      <span>{m.nama_kelompok}</span>
+                    </div>
+                  )}
+                  {m.nama_desa && (
+                    <div className="flex items-start gap-2">
+                      <MapPin size={13} className="mt-0.5 shrink-0 text-gray-400" />
+                      <span>
+                        {m.nama_desa}, {m.nama_kecamatan}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-2">
+                    <Calendar size={13} className="mt-0.5 shrink-0 text-gray-400" />
+                    <span>Tahun pengadaan {m.tahun_pengadaan}</span>
+                  </div>
+                  {m.nama_sumber_dana && (
+                    <div className="flex items-start gap-2">
+                      <Landmark size={13} className="mt-0.5 shrink-0 text-gray-400" />
+                      <span>Sumber dana {m.nama_sumber_dana}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </Popup>
           </Marker>
-        ))}
-      </MarkerClusterGroup>
+        );
+      })}
     </MapContainer>
   );
 }

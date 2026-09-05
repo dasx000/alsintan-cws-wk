@@ -23,7 +23,7 @@ export function getMarkerIconHtml(kategori: string, kondisi: string): string {
   const color = KONDISI_MARKER_COLORS[kondisi] ?? "#6b7280";
   const path = ICON_PATHS[kategori] ?? ICON_PATHS.pra_panen;
 
-  return `<div style="background:${color};width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">${path}</svg>
+  return `<div style="background:${color};width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid white;box-shadow:0 1px 2px rgba(0,0,0,0.4);">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">${path}</svg>
   </div>`;
 }

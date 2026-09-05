@@ -12,6 +12,7 @@ interface AlsintanMapRow {
   desa: string | null;
   kecamatan: string | null;
   master_jenis_alsintan: { nama_jenis: string; kategori: string } | null;
+  master_sumber_dana: { nama_sumber: string } | null;
 }
 
 export interface PetaFilters {
@@ -32,7 +33,7 @@ export async function getPetaMarkers(filters: PetaFilters = {}): Promise<PetaMar
     .from("alsintan")
     .select(
       `id, id_unit, kondisi, tahun_pengadaan, latitude, longitude, penerima, desa, kecamatan,
-       master_jenis_alsintan(nama_jenis, kategori)`
+       master_jenis_alsintan(nama_jenis, kategori), master_sumber_dana(nama_sumber)`
     )
     .not("latitude", "is", null)
     .not("longitude", "is", null)
@@ -53,6 +54,8 @@ export async function getPetaMarkers(filters: PetaFilters = {}): Promise<PetaMar
     kondisi: a.kondisi,
     kategori: a.master_jenis_alsintan?.kategori ?? "pra_panen",
     nama_jenis: a.master_jenis_alsintan?.nama_jenis ?? "-",
+    tahun_pengadaan: a.tahun_pengadaan,
+    nama_sumber_dana: a.master_sumber_dana?.nama_sumber ?? null,
     latitude: a.latitude,
     longitude: a.longitude,
     nama_kelompok: a.penerima,

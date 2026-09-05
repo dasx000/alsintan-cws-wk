@@ -3,6 +3,8 @@
 import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ScrollReveal from "@/components/landing/ScrollReveal";
+import KategoriChart, { type KategoriDatum } from "@/components/landing/KategoriChart";
+import JenisChart, { type JenisDatum } from "@/components/landing/JenisChart";
 
 export interface YearlyDatum {
   tahun: number;
@@ -25,7 +27,15 @@ function ChartTooltip({ active, payload }: ChartTooltipProps) {
   );
 }
 
-export default function LandingDataSection({ yearly }: { yearly: YearlyDatum[] }) {
+export default function LandingDataSection({
+  yearly,
+  kategori,
+  jenis,
+}: {
+  yearly: YearlyDatum[];
+  kategori: KategoriDatum[];
+  jenis: JenisDatum[];
+}) {
   // Fungsi get_landing_yearly_stats() sudah kembalikan 5 tahun kalender
   // terakhir terurut ascending (lama->baru), termasuk tahun dengan jumlah 0.
   const hasData = yearly.length > 0;
@@ -95,6 +105,14 @@ export default function LandingDataSection({ yearly }: { yearly: YearlyDatum[] }
               </p>
             )}
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={250}>
+          <KategoriChart data={kategori} />
+        </ScrollReveal>
+
+        <ScrollReveal delay={350}>
+          <JenisChart data={jenis} />
         </ScrollReveal>
       </div>
     </section>

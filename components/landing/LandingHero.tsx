@@ -4,7 +4,13 @@ import { ChevronDown } from "lucide-react";
 // Foto sawah asli Way Kanan (bukan foto stok) sebagai background hero --
 // modifikasi dari pola SIMANTAN yang pakai foto sawah generik, ini dokumentasi
 // sendiri supaya lebih otentik ke konteks kabupaten ini.
-export default function LandingHero({ totalAlsintan }: { totalAlsintan: number }) {
+export default function LandingHero({
+  totalAlsintan,
+  totalKelompok,
+}: {
+  totalAlsintan: number;
+  totalKelompok: number;
+}) {
   return (
     <section id="beranda" className="relative isolate overflow-hidden">
       <div className="absolute inset-0 -z-20">
@@ -40,11 +46,18 @@ export default function LandingHero({ totalAlsintan }: { totalAlsintan: number }
         </p>
 
         <div
-          className="animate-fade-in-up mt-10 rounded-2xl border border-white/15 bg-white/10 px-12 py-6 backdrop-blur-md"
+          className="animate-fade-in-up mt-10 flex flex-col gap-4 rounded-2xl border border-white/15 bg-white/10 px-8 py-6 backdrop-blur-md sm:flex-row sm:gap-0 sm:px-12"
           style={{ animationDelay: "340ms" }}
         >
-          <p className="text-4xl font-bold tracking-tight sm:text-5xl">{totalAlsintan.toLocaleString("id-ID")}+</p>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-green-100">Alsintan Disalurkan</p>
+          <div className="sm:pr-12">
+            <p className="text-4xl font-bold tracking-tight sm:text-5xl">{totalAlsintan.toLocaleString("id-ID")}+</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-green-100">Alsintan Disalurkan</p>
+          </div>
+          <div className="hidden w-px self-stretch bg-white/15 sm:block" />
+          <div className="sm:pl-12">
+            <p className="text-4xl font-bold tracking-tight sm:text-5xl">{totalKelompok.toLocaleString("id-ID")}+</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-green-100">Kelompok Tani</p>
+          </div>
         </div>
       </div>
 
