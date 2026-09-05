@@ -40,8 +40,7 @@ export default function LoginPage() {
         <div>
           <h2 className="text-2xl font-semibold">Monitoring Alsintan Bantuan Pemerintah</h2>
           <p className="mt-2 max-w-md text-green-100">
-            Database unit, riwayat pemanfaatan &amp; servis, serta peta sebaran alat mesin pertanian se-Kabupaten
-            Way Kanan.
+            Database unit, kondisi, dan peta sebaran alat mesin pertanian bantuan pemerintah se-Kabupaten Way Kanan.
           </p>
         </div>
         <p className="text-xs text-green-200">AlsinTrack</p>

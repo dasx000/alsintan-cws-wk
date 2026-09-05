@@ -5,8 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
-import RiwayatPemanfaatan from "@/components/riwayat/RiwayatPemanfaatan";
-import RiwayatServis from "@/components/riwayat/RiwayatServis";
 import RiwayatMonev from "@/components/riwayat/RiwayatMonev";
 
 interface AlsintanDetail {
@@ -40,35 +38,24 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ profile }, { data: raw }, { data: pemanfaatanRaw }, { data: servisRaw }, { data: monevRaw }] =
-    await Promise.all([
-      getCurrentProfile(),
-      supabase
-        .from("alsintan")
-        .select(
-          `id, id_unit, tahun_pengadaan, no_bast, tanggal_bast,
+  const [{ profile }, { data: raw }, { data: monevRaw }] = await Promise.all([
+    getCurrentProfile(),
+    supabase
+      .from("alsintan")
+      .select(
+        `id, id_unit, tahun_pengadaan, no_bast, tanggal_bast,
            kondisi, penerima, desa, kecamatan, catatan, foto_url, latitude, longitude,
            master_jenis_alsintan(nama_jenis),
            master_sumber_dana(nama_sumber)`
-        )
-        .eq("id", id)
-        .single(),
-      supabase
-        .from("pemanfaatan")
-        .select("id, tanggal, luas_layanan_ha, komoditas, operator")
-        .eq("id_alsintan", id)
-        .order("tanggal", { ascending: false }),
-      supabase
-        .from("servis")
-        .select("id, tanggal, kerusakan, biaya, sparepart, status")
-        .eq("id_alsintan", id)
-        .order("tanggal", { ascending: false }),
-      supabase
-        .from("monev")
-        .select("id, tanggal_kunjungan, kondisi_terverifikasi, catatan, foto_url, petugas")
-        .eq("id_alsintan", id)
-        .order("tanggal_kunjungan", { ascending: false }),
-    ]);
+      )
+      .eq("id", id)
+      .single(),
+    supabase
+      .from("monev")
+      .select("id, tanggal_kunjungan, kondisi_terverifikasi, catatan, foto_url, petugas")
+      .eq("id_alsintan", id)
+      .order("tanggal_kunjungan", { ascending: false }),
+  ]);
 
   if (!raw) notFound();
   const alsintan = raw as unknown as AlsintanDetail;
@@ -157,13 +144,6 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       )}
 
       <div className="space-y-6">
-        <RiwayatPemanfaatan
-          idAlsintan={id}
-          entries={pemanfaatanRaw ?? []}
-          canWrite={canWrite}
-          canDelete={canDelete}
-        />
-        <RiwayatServis idAlsintan={id} entries={servisRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
         <RiwayatMonev idAlsintan={id} entries={monevRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
       </div>
     </div>

@@ -8,12 +8,19 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 // prefix yang sama (bukan sequence Postgres terpisah -- cukup untuk skala
 // penggunaan beberapa penyuluh, race condition langka ditangani lewat
 // UNIQUE constraint + pesan retry di action pemanggilnya).
-export async function generateIdUnit(
+//
+// `count` > 1 dipakai saat 1 kelompok dapat beberapa unit identik sekaligus
+// (mis. 5 Hand Sprayer) -- generate langsung sekaligus dari 1 query cek
+// nomor urut terakhir, bukan panggil fungsi ini berulang (yang tiap
+// panggilan query ulang DB tapi belum ada baris baru ter-insert, jadi
+// nomor urutnya akan sama semua alih-alih berurutan).
+export async function generateIdUnitBatch(
   supabase: SupabaseServerClient,
   idKecamatan: string,
   kodeKategori: string,
-  tahun: number
-): Promise<string> {
+  tahun: number,
+  count: number
+): Promise<string[]> {
   const prefix = `ALS-${idKecamatan}-${kodeKategori}-${tahun}-`;
 
   const { data, error } = await supabase
@@ -31,5 +38,5 @@ export async function generateIdUnit(
     if (!Number.isNaN(lastSeq)) nextSeq = lastSeq + 1;
   }
 
-  return `${prefix}${String(nextSeq).padStart(3, "0")}`;
+  return Array.from({ length: count }, (_, i) => `${prefix}${String(nextSeq + i).padStart(3, "0")}`);
 }

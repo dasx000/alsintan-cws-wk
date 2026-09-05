@@ -2,7 +2,7 @@
 
 import { LayersControl, MapContainer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { Calendar, Landmark, MapPin, Users, Wheat, Wrench } from "lucide-react";
+import { Calendar, Landmark, MapPin, Tractor, Users, Wheat } from "lucide-react";
 import { getMarkerIconHtml } from "@/lib/marker-icon";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import MapBaseLayers from "@/components/MapBaseLayers";
@@ -54,7 +54,7 @@ export default function PetaSebaran({ markers }: { markers: PetaMarkerData[] }) 
       </MapBaseLayers>
       {markers.map((m) => {
         const isPascaPanen = m.kategori === "pasca_panen";
-        const KategoriIcon = isPascaPanen ? Wheat : Wrench;
+        const KategoriIcon = isPascaPanen ? Wheat : Tractor;
         return (
           <Marker key={m.id} position={[m.latitude, m.longitude]} icon={markerIconFor(m.kategori, m.kondisi)}>
             <Popup minWidth={220} maxWidth={260}>

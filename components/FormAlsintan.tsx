@@ -1,10 +1,33 @@
 "use client";
 
-import { useActionState, useRef, useState, type ChangeEvent } from "react";
+import { useActionState, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import { Camera, ClipboardList, Copy, MapPin, StickyNote, Users } from "lucide-react";
 import type { AlsintanActionState } from "@/lib/actions/alsintan";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
 import { compressImage } from "@/lib/compress-image";
+
+function SectionCard({
+  icon,
+  title,
+  className = "",
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`rounded-lg border border-gray-200 bg-white p-4 ${className}`}>
+      <div className="mb-3 flex items-center gap-2 text-gray-800">
+        {icon}
+        <h2 className="text-sm font-semibold">{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 const PetaLokasiPicker = dynamic(() => import("@/components/PetaLokasiPicker"), {
   ssr: false,
@@ -124,7 +147,8 @@ export default function FormAlsintan({
 
   return (
     <form action={formAction} className="max-w-2xl space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <SectionCard icon={<ClipboardList size={16} />} title="Informasi Unit">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Jenis Alsintan</label>
           <select name="id_jenis" defaultValue={initialData?.id_jenis} required className={inputClass}>
@@ -189,9 +213,9 @@ export default function FormAlsintan({
         </div>
 
       </div>
+      </SectionCard>
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="mb-3 text-sm font-medium text-gray-700">Penerima</p>
+      <SectionCard icon={<Users size={16} />} title="Penerima" className="bg-gray-50">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Kecamatan</label>
@@ -232,10 +256,27 @@ export default function FormAlsintan({
         </div>
         <input type="hidden" name="kecamatan" value={kecamatanNama} />
         <input type="hidden" name="desa" value={desaNama} />
-      </div>
+      </SectionCard>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Foto Unit</label>
+      {!initialData && (
+        <SectionCard icon={<Copy size={16} />} title="Jumlah Unit Sekaligus" className="border-green-200 bg-green-50">
+          <input
+            name="jumlah_unit"
+            type="number"
+            min={1}
+            max={100}
+            defaultValue={1}
+            className={`${inputClass} max-w-[140px] bg-white`}
+          />
+          <p className="mt-1 text-xs text-gray-600">
+            Kalau 1 kelompok dapat beberapa unit identik sekaligus (mis. 5 Hand Sprayer), isi jumlahnya di sini --
+            sistem otomatis membuat baris terpisah per unit dengan ID unit berurutan, memakai data yang sama di form
+            ini untuk semuanya.
+          </p>
+        </SectionCard>
+      )}
+
+      <SectionCard icon={<Camera size={16} />} title="Foto Unit">
         <input
           ref={fileInputRef}
           name="foto"
@@ -257,10 +298,9 @@ export default function FormAlsintan({
         <p className="mt-1 text-xs text-gray-500">
           Foto otomatis dikompres (maks ~500KB, lebar ~1000px) sebelum diupload.
         </p>
-      </div>
+      </SectionCard>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Lokasi</label>
+      <SectionCard icon={<MapPin size={16} />} title="Lokasi">
         <PetaLokasiPicker
           latitude={latitude}
           longitude={longitude}
@@ -276,17 +316,16 @@ export default function FormAlsintan({
             ? `Koordinat: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
             : "Klik di peta untuk menandai lokasi unit."}
         </p>
-      </div>
+      </SectionCard>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Catatan</label>
+      <SectionCard icon={<StickyNote size={16} />} title="Catatan">
         <textarea
           name="catatan"
           defaultValue={initialData?.catatan ?? ""}
           rows={3}
           className={inputClass}
         />
-      </div>
+      </SectionCard>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 

@@ -39,10 +39,10 @@ export default function AppShell({
     <div className="min-h-screen bg-gray-50 sm:flex">
       {/* Sidebar (desktop) */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-gray-200 bg-white sm:flex">
-        <div className="border-b border-gray-200 px-5 py-4">
+        <Link href="/" className="block border-b border-gray-200 px-5 py-4 hover:bg-gray-50">
           <p className="text-sm font-semibold text-gray-900">AlsinTrack</p>
           <p className="text-xs text-gray-500">Monitoring Alsintan</p>
-        </div>
+        </Link>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -79,9 +79,9 @@ export default function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar (mobile) */}
         <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:hidden">
-          <div>
+          <Link href="/">
             <p className="text-sm font-semibold text-gray-900">AlsinTrack</p>
-          </div>
+          </Link>
           <form action={signOut}>
             <button type="submit" className="text-gray-500">
               <LogOut size={18} />

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { generateIdUnit } from "@/lib/generate-id-unit";
+import { generateIdUnitBatch } from "@/lib/generate-id-unit";
 
 export interface AlsintanActionState {
   error: string | null;
@@ -94,12 +94,20 @@ async function uploadFotoIfPresent(
   return { error: null, fotoUrl: data.publicUrl };
 }
 
+const MAX_JUMLAH_UNIT = 100;
+
 export async function createAlsintan(
   _prevState: AlsintanActionState,
   formData: FormData
 ): Promise<AlsintanActionState> {
   const parsed = parseAlsintanForm(formData);
   if (parsed.error || !parsed.data) return { error: parsed.error ?? "Data tidak valid." };
+
+  const jumlahRaw = Number(formData.get("jumlah_unit"));
+  const jumlahUnit = Number.isInteger(jumlahRaw) && jumlahRaw > 0 ? jumlahRaw : 1;
+  if (jumlahUnit > MAX_JUMLAH_UNIT) {
+    return { error: `Jumlah unit sekaligus maksimal ${MAX_JUMLAH_UNIT}.` };
+  }
 
   const supabase = await createClient();
 
@@ -123,9 +131,15 @@ export async function createAlsintan(
 
   const kodeKategori = jenis.kategori === "pasca_panen" ? "PS" : "PP";
 
-  let idUnit: string;
+  let idUnitList: string[];
   try {
-    idUnit = await generateIdUnit(supabase, kecamatanRow.id_kecamatan, kodeKategori, parsed.data.tahun_pengadaan);
+    idUnitList = await generateIdUnitBatch(
+      supabase,
+      kecamatanRow.id_kecamatan,
+      kodeKategori,
+      parsed.data.tahun_pengadaan,
+      jumlahUnit
+    );
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Gagal membuat ID unit." };
   }
@@ -137,12 +151,18 @@ export async function createAlsintan(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("alsintan").insert({
+  // Setiap unit fisik jadi baris sendiri (bukan 1 baris + kolom kuantitas) --
+  // supaya kondisi, servis, dan riwayat lain bisa dilacak per unit walau
+  // asalnya dari 1 event bantuan yang sama. Lihat diskusi terkait di commit
+  // ini: skema tetap 1 baris = 1 unit fisik.
+  const rows = idUnitList.map((idUnit) => ({
     ...parsed.data,
     id_unit: idUnit,
     foto_url: fotoUrl,
     dibuat_oleh: user?.id,
-  });
+  }));
+
+  const { error } = await supabase.from("alsintan").insert(rows);
 
   if (error) {
     if (error.code === "23505" && error.message.includes("id_unit")) {

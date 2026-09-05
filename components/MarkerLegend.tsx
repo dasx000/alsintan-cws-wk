@@ -1,4 +1,4 @@
-import { KATEGORI_RING_COLORS, KONDISI_MARKER_COLORS } from "@/lib/marker-icon";
+import { KATEGORI_RING_COLORS, KONDISI_MARKER_COLORS, getMarkerIconHtml } from "@/lib/marker-icon";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
 
 const KATEGORI_LABELS: Record<string, string> = {
@@ -6,19 +6,22 @@ const KATEGORI_LABELS: Record<string, string> = {
   pasca_panen: "Pascapanen",
 };
 
-// Menjelaskan kombinasi 2-warna di tiap ikon marker peta: ring luar = kategori,
-// isi badge = kondisi (lihat lib/marker-icon.ts). Ditaruh bersama
-// KepadatanLegend di kartu yang sama dengan peta.
+// Menjelaskan kombinasi info di tiap ikon marker peta: kategori dibedakan
+// lewat BENTUK siluet + warna ring (traktor/hijau utk prapanen, combine
+// harvester/amber utk pascapanen), kondisi lewat warna isi. Ikonnya dirender
+// dari fungsi yang sama persis dipakai marker asli (lib/marker-icon.ts)
+// supaya legenda tidak pernah beda dari yang tampil di peta. Ditaruh
+// bersama KepadatanLegend di kartu yang sama dengan peta.
 export default function MarkerLegend() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
       <div className="flex items-center gap-2">
-        <span className="font-medium text-gray-600">Kategori (ring):</span>
-        {Object.entries(KATEGORI_RING_COLORS).map(([kategori, color]) => (
+        <span className="font-medium text-gray-600">Kategori (bentuk &amp; ring):</span>
+        {Object.keys(KATEGORI_RING_COLORS).map((kategori) => (
           <span key={kategori} className="flex items-center gap-1.5">
             <span
-              className="size-3 rounded-full border-2 bg-white"
-              style={{ borderColor: color }}
+              className="inline-flex items-center justify-center"
+              dangerouslySetInnerHTML={{ __html: getMarkerIconHtml(kategori, "baik") }}
             />
             {KATEGORI_LABELS[kategori] ?? kategori}
           </span>

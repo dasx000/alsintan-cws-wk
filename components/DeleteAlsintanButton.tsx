@@ -5,7 +5,17 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { deleteAlsintan } from "@/lib/actions/alsintan";
 
-export default function DeleteAlsintanButton({ id, idUnit }: { id: string; idUnit: string }) {
+export default function DeleteAlsintanButton({
+  id,
+  idUnit,
+  compact = false,
+  redirectTo = "/alsintan",
+}: {
+  id: string;
+  idUnit: string;
+  compact?: boolean;
+  redirectTo?: string | null;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -16,11 +26,29 @@ export default function DeleteAlsintanButton({ id, idUnit }: { id: string; idUni
     startTransition(async () => {
       const result = await deleteAlsintan(id);
       if (result.error) {
-        setError(result.error);
+        if (compact) {
+          window.alert(result.error);
+        } else {
+          setError(result.error);
+        }
         return;
       }
-      router.push("/alsintan");
+      if (redirectTo) router.push(redirectTo);
+      else router.refresh();
     });
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={handleClick}
+        disabled={isPending}
+        title="Hapus"
+        className="inline-flex items-center justify-center rounded-md p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
+      >
+        <Trash2 size={15} />
+      </button>
+    );
   }
 
   return (
