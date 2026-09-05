@@ -1,6 +1,5 @@
 import ScrollReveal from "@/components/landing/ScrollReveal";
-import PetaSebaranLoader from "@/components/PetaSebaranLoader";
-import KepadatanLegend from "@/components/KepadatanLegend";
+import LandingPetaFilter from "@/components/landing/LandingPetaFilter";
 import TopKecamatanChart, { type KecamatanDatum } from "@/components/landing/TopKecamatanChart";
 import KecamatanExplorer, { type KecamatanDetailRow } from "@/components/landing/KecamatanExplorer";
 import type { PetaMarkerData } from "@/components/PetaSebaran";
@@ -25,10 +24,7 @@ export default function LandingSebaranSection({
         </ScrollReveal>
 
         <ScrollReveal delay={150}>
-          <div className="mt-10 overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
-            <PetaSebaranLoader markers={markers} />
-            <KepadatanLegend />
-          </div>
+          <LandingPetaFilter markers={markers} />
         </ScrollReveal>
 
         <ScrollReveal delay={250}>

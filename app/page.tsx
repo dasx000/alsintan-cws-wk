@@ -70,7 +70,6 @@ export default async function RootPage() {
         kecamatanStats={(kecamatanStats as KecamatanDatum[] | null) ?? []}
         kecamatanDetail={(kecamatanDetail as KecamatanDetailRow[] | null) ?? []}
       />
-      {/* Seksi Kontak menyusul di langkah berikutnya */}
       <LandingFooter />
     </div>
   );

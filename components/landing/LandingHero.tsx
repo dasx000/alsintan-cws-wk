@@ -34,15 +34,15 @@ export default function LandingHero({
           style={{ animationDelay: "100ms" }}
         >
           Monitoring <span className="text-yellow-400">Alsintan</span>
-          <br className="hidden sm:block" /> Bantuan Pemerintah
+          <br className="hidden sm:block" /> <span className="text-yellow-400">Bantuan</span> Pemerintah
         </h1>
 
         <p
           className="animate-fade-in-up mx-auto mt-6 max-w-2xl text-base text-green-100 sm:text-lg"
           style={{ animationDelay: "220ms" }}
         >
-          Database unit, riwayat pemanfaatan &amp; servis, serta peta sebaran alat mesin pertanian se-Kabupaten Way
-          Kanan.
+          Statistik distribusi, tren tahunan, dan peta sebaran alat mesin pertanian bantuan pemerintah se-Kabupaten
+          Way Kanan.
         </p>
 
         <div

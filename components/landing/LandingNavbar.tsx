@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Tractor, User } from "lucide-react";
 
-// Struktur nav 4-item + tombol Masuk ini terinspirasi SIMANTAN Kaltim, tapi
-// label diubah (bukan Beranda/Statistik/Distribusi/Peta) karena halaman kita
-// tidak punya statistik/peta versi publik -- semua data tetap di balik login.
+// Struktur nav ini terinspirasi SIMANTAN Kaltim, tapi label diubah (bukan
+// Beranda/Statistik/Distribusi/Peta). Item "Kontak" sengaja belum ada --
+// menunggu info kontak dinas yang asli, jangan diisi placeholder/karangan.
 const NAV_ITEMS = [
   { href: "#beranda", label: "Beranda" },
   { href: "#data-alsintan", label: "Data Alsintan" },
   { href: "#sebaran", label: "Sebaran" },
-  { href: "#kontak", label: "Kontak" },
 ];
 
 // Transparan mengambang di atas hero gelap saat di paling atas (seperti
@@ -60,7 +59,7 @@ export default function LandingNavbar({ loggedIn = false }: { loggedIn?: boolean
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2.5">
+        <a href="#beranda" className="flex items-center gap-2.5">
           <span
             className={`flex size-9 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white shadow-sm shadow-green-600/30 transition-all duration-300 ${
               scrolled ? "" : "ring-1 ring-white/25"
@@ -76,7 +75,7 @@ export default function LandingNavbar({ loggedIn = false }: { loggedIn?: boolean
               Sistem Monitoring Alsintan
             </p>
           </div>
-        </div>
+        </a>
 
         <nav
           className={`hidden items-center gap-8 text-sm font-medium transition-colors duration-300 md:flex ${

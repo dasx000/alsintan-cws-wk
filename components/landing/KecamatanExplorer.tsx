@@ -112,8 +112,10 @@ export default function KecamatanExplorer({
           })}
         </div>
 
-        {/* Panel kanan: detail kecamatan terpilih */}
-        <div className="min-w-0">
+        {/* Panel kanan: detail kecamatan terpilih. Border-top khusus mobile --
+            di layar sempit grid jadi 1 kolom (list dan detail bertumpuk),
+            tanpa ini keduanya nyambung tanpa batas yang jelas. */}
+        <div className="min-w-0 border-t border-gray-200 pt-5 md:border-t-0 md:pt-0">
           {!activeStat ? (
             <p className="py-10 text-center text-sm text-gray-400">Pilih kecamatan di daftar sebelah kiri.</p>
           ) : (

@@ -4,6 +4,7 @@ import PublicPetaHeader from "@/components/PublicPetaHeader";
 import PetaFilter from "@/components/PetaFilter";
 import PetaSebaranLoader from "@/components/PetaSebaranLoader";
 import KepadatanLegend from "@/components/KepadatanLegend";
+import MarkerLegend from "@/components/MarkerLegend";
 
 // Halaman publik (tanpa login) -- lihat migration 0011_public_peta_access.sql
 // untuk policy RLS yang membuka akses baca ke role anon. Sengaja dipindah
@@ -54,6 +55,7 @@ export default async function PetaSebaranPage({
         ) : (
           <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
             <PetaSebaranLoader markers={markers} />
+            <MarkerLegend />
             <KepadatanLegend />
           </div>
         )}
