@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createAlsintan } from "@/lib/actions/alsintan";
 import FormAlsintan from "@/components/FormAlsintan";
 import { getAlsintanFormData } from "@/lib/alsintan-form-data";
+import { canCreateAlsintan } from "@/lib/alsintan-permissions";
 
 export default async function TambahAlsintanPage() {
-  const formData = await getAlsintanFormData();
+  const { profile, ...formData } = await getAlsintanFormData();
+  if (!canCreateAlsintan(profile)) redirect("/alsintan");
 
   return (
     <div className="mx-auto max-w-3xl">

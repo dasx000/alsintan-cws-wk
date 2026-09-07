@@ -2,12 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, FileSpreadsheet } from "lucide-react";
 import { getCurrentProfile } from "@/lib/get-current-profile";
+import { canCreateAlsintan } from "@/lib/alsintan-permissions";
 import ImportAlsintanForm from "@/components/ImportAlsintanForm";
 
 export default async function ImporAlsintanPage() {
   const { profile } = await getCurrentProfile();
-  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
-  if (!canWrite) redirect("/alsintan");
+  if (!canCreateAlsintan(profile)) redirect("/alsintan");
 
   return (
     <div className="mx-auto max-w-2xl">

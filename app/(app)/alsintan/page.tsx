@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import { KATEGORI_RING_COLORS } from "@/lib/marker-icon";
+import { canCreateAlsintan, canManageAlsintanRow, getAlsintanFilterScope } from "@/lib/alsintan-permissions";
 import PageSizeSelect from "@/components/PageSizeSelect";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
 import AlsintanFilter from "@/components/AlsintanFilter";
@@ -38,17 +39,20 @@ export default async function AlsintanPage({
     kategori?: string;
     kondisi?: string;
     kecamatan?: string;
+    desa?: string;
     tahun?: string;
     q?: string;
   }>;
 }) {
-  const { page: pageParam, size: sizeParam, jenis, kategori, kondisi, kecamatan, tahun, q } = await searchParams;
+  const { page: pageParam, size: sizeParam, jenis, kategori, kondisi, kecamatan, desa, tahun, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const pageSize = PAGE_SIZE_OPTIONS.includes(Number(sizeParam)) ? Number(sizeParam) : DEFAULT_PAGE_SIZE;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
   const supabase = await createClient();
+  const { profile } = await getCurrentProfile();
+  const scope = getAlsintanFilterScope(profile);
 
   // Filter kategori butuh inner join ke master_jenis_alsintan supaya bisa
   // difilter (default embedded select adalah left join, nggak bisa dipakai
@@ -58,9 +62,20 @@ export default async function AlsintanPage({
   if (kategori) selectStr = selectStr.replace("master_jenis_alsintan(", "master_jenis_alsintan!inner(");
 
   let listQuery = supabase.from("alsintan").select(selectStr, { count: "exact" });
+  // Kunci wilayah -- koordinator dikunci ke kecamatan yang dia koordinasikan,
+  // penyuluh biasa dikunci ke desa yang dia pegang (lihat getAlsintanFilterScope).
+  // Diterapkan SELALU di server, tidak cuma lewat opsi dropdown yang dibatasi,
+  // supaya tidak bisa dilewati dengan mengubah parameter URL manual.
+  if (scope.lockedKecamatan) {
+    listQuery = listQuery.in("kecamatan", scope.lockedKecamatan.length > 0 ? scope.lockedKecamatan : ["__none__"]);
+  }
+  if (scope.lockedDesa) {
+    listQuery = listQuery.in("desa", scope.lockedDesa.length > 0 ? scope.lockedDesa : ["__none__"]);
+  }
   if (jenis) listQuery = listQuery.eq("id_jenis", jenis);
   if (kondisi) listQuery = listQuery.eq("kondisi", kondisi);
   if (kecamatan) listQuery = listQuery.eq("kecamatan", kecamatan);
+  if (desa) listQuery = listQuery.eq("desa", desa);
   if (tahun) listQuery = listQuery.eq("tahun_pengadaan", Number(tahun));
   if (kategori) listQuery = listQuery.eq("master_jenis_alsintan.kategori", kategori);
   if (q) {
@@ -78,17 +93,16 @@ export default async function AlsintanPage({
   }
   listQuery = listQuery.order("created_at", { ascending: false }).range(from, to);
 
-  const [{ profile }, { data: rawList, count }, { data: jenisList }, { data: kecamatanList }, { data: tahunRows }] =
+  const [{ data: rawList, count }, { data: jenisList }, { data: kecamatanList }, { data: desaList }, { data: tahunRows }] =
     await Promise.all([
-      getCurrentProfile(),
       listQuery,
       supabase.from("master_jenis_alsintan").select("id, nama_jenis").order("nama_jenis"),
       supabase.from("master_kecamatan").select("id_kecamatan, nama_kecamatan").order("nama_kecamatan"),
+      supabase.from("master_desa").select("id_desa, nama_desa, master_kecamatan(nama_kecamatan)").order("nama_desa"),
       supabase.from("alsintan").select("tahun_pengadaan"),
     ]);
 
-  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
-  const canDelete = profile?.role === "admin";
+  const canCreate = canCreateAlsintan(profile);
 
   const alsintanList = (rawList ?? []) as unknown as AlsintanRow[];
   const totalPages = count ? Math.ceil(count / pageSize) : 1;
@@ -99,7 +113,25 @@ export default async function AlsintanPage({
     .sort((a, b) => b - a)
     .map((t) => ({ value: String(t), label: String(t) }));
 
-  const activeFilters = { jenis, kategori, kondisi, kecamatan, tahun, q };
+  // Opsi dropdown kecamatan/desa dibatasi ke wilayah yang dikunci (kalau ada)
+  // supaya secara UI pun penyuluh/koordinator tidak bisa memilih wilayah lain.
+  const desaRows = (desaList ?? []) as unknown as {
+    id_desa: string;
+    nama_desa: string;
+    master_kecamatan: { nama_kecamatan: string } | null;
+  }[];
+  const kecamatanOptions = (kecamatanList ?? [])
+    .filter((k) => !scope.lockedKecamatan || scope.lockedKecamatan.includes(k.nama_kecamatan))
+    .map((k) => ({ value: k.nama_kecamatan, label: k.nama_kecamatan }));
+  const desaOptions = desaRows
+    .filter((d) => {
+      if (scope.lockedDesa) return scope.lockedDesa.includes(d.nama_desa);
+      if (scope.lockedKecamatan) return !!d.master_kecamatan && scope.lockedKecamatan.includes(d.master_kecamatan.nama_kecamatan);
+      return true;
+    })
+    .map((d) => ({ value: d.nama_desa, label: d.nama_desa }));
+
+  const activeFilters = { jenis, kategori, kondisi, kecamatan, desa, tahun, q };
   function buildPageHref(targetPage: number) {
     const params = new URLSearchParams();
     Object.entries(activeFilters).forEach(([key, value]) => {
@@ -111,7 +143,7 @@ export default async function AlsintanPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-7xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Alsintan</h1>
@@ -125,7 +157,7 @@ export default async function AlsintanPage({
             <Download size={16} />
             Ekspor Excel
           </a>
-          {canWrite && (
+          {canCreate && (
             <Link
               href="/alsintan/impor"
               className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -134,7 +166,7 @@ export default async function AlsintanPage({
               Impor Excel
             </Link>
           )}
-          {canWrite && (
+          {canCreate && (
             <Link
               href="/alsintan/tambah"
               className="inline-flex items-center gap-1.5 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
@@ -148,7 +180,8 @@ export default async function AlsintanPage({
 
       <AlsintanFilter
         jenisOptions={(jenisList ?? []).map((j) => ({ value: j.id, label: j.nama_jenis }))}
-        kecamatanOptions={(kecamatanList ?? []).map((k) => ({ value: k.nama_kecamatan, label: k.nama_kecamatan }))}
+        kecamatanOptions={kecamatanOptions}
+        desaOptions={desaOptions}
         tahunOptions={tahunOptions}
       />
 
@@ -171,6 +204,7 @@ export default async function AlsintanPage({
             {alsintanList.map((a) => {
               const kategoriInfo = KATEGORI_INFO[a.master_jenis_alsintan?.kategori ?? ""];
               const ringColor = KATEGORI_RING_COLORS[a.master_jenis_alsintan?.kategori ?? ""] ?? "#9ca3af";
+              const canManageRow = canManageAlsintanRow(profile, { kecamatan: a.kecamatan, desa: a.desa });
               return (
                 <tr key={a.id} className="group hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs text-gray-900">
@@ -229,7 +263,7 @@ export default async function AlsintanPage({
                       >
                         <Eye size={15} />
                       </Link>
-                      {canWrite && (
+                      {canManageRow && (
                         <Link
                           href={`/alsintan/${a.id}/edit`}
                           title="Edit"
@@ -238,7 +272,7 @@ export default async function AlsintanPage({
                           <Pencil size={15} />
                         </Link>
                       )}
-                      {canDelete && (
+                      {canManageRow && (
                         <DeleteAlsintanButton id={a.id} idUnit={a.id_unit} compact redirectTo={null} />
                       )}
                     </div>

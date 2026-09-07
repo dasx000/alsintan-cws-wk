@@ -8,7 +8,7 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
   if (!profile) redirect("/login");
 
   return (
-    <AppShell userLabel={profile.nama || profile.email || ""} role={profile.role}>
+    <AppShell userLabel={profile.nama || profile.email || ""} role={profile.role} koordinator={profile.koordinator}>
       {children}
     </AppShell>
   );

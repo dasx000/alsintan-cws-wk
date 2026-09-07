@@ -9,6 +9,7 @@ import {
   type JenisAlsintanActionState,
 } from "@/lib/actions/jenis-alsintan";
 import { KATEGORI_OPTIONS } from "@/lib/jenis-alsintan-kategori";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 
 const PAGE_SIZE = 10;
 
@@ -126,6 +127,7 @@ export default function JenisAlsintanManager({
   const [isDeleting, startDeleteTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const { confirm, dialog } = useConfirmDialog();
 
   const editingJenis = initialData.find((j) => j.id === editingId) ?? null;
 
@@ -139,8 +141,9 @@ export default function JenisAlsintanManager({
     setPage(1);
   }
 
-  function handleDelete(id: string, nama: string) {
-    if (!window.confirm(`Hapus jenis "${nama}"?`)) return;
+  async function handleDelete(id: string, nama: string) {
+    const ok = await confirm(`Hapus jenis "${nama}"?`, { title: "Hapus jenis alsintan", confirmLabel: "Hapus", danger: true });
+    if (!ok) return;
     setDeleteError(null);
     startDeleteTransition(async () => {
       const result = await deleteJenisAlsintan(id);
@@ -250,6 +253,7 @@ export default function JenisAlsintanManager({
           )}
         </div>
       )}
+      {dialog}
     </div>
   );
 }

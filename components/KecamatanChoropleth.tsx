@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { GeoJSON, LayerGroup } from "react-leaflet";
-import type { Feature, FeatureCollection } from "geojson";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { GeoJSON, LayerGroup, Marker } from "react-leaflet";
+import L from "leaflet";
+import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
 import type { Layer, Path, PathOptions, StyleFunction } from "leaflet";
+import { getPolygonLabelPoint } from "@/lib/polygon-label-point";
 
 // Batas kecamatan Way Kanan, sumber: Badan Informasi Geospasial (BIG), edisi
 // 2022, disederhanakan (mapshaper -simplify dp 8% keep-shapes) dari ~47rb ke
@@ -56,6 +58,20 @@ export default function KecamatanChoropleth({ counts }: { counts: Map<string, nu
 
   const maxCount = Math.max(1, ...Array.from(counts.values()));
   const totalCount = Array.from(counts.values()).reduce((a, b) => a + b, 0);
+
+  // Titik label tiap kecamatan (beda dari tooltip hover yang sudah ada) --
+  // dihitung dari centroid geometris bentuknya sendiri, BUKAN titik tengah
+  // bounding box (getBounds().getCenter()) yang gampang jatuh di luar
+  // bentuk untuk kecamatan yang cekung/berkelok seperti Pakuan Ratu, Way
+  // Tuba, atau Negeri Besar -- lihat lib/polygon-label-point.ts.
+  const labelPositions = useMemo(() => {
+    if (!geoData) return [];
+    return geoData.features.map((f) => {
+      const nama = (f.properties?.WADMKC as string | undefined) ?? "-";
+      const point = getPolygonLabelPoint(f.geometry as Polygon | MultiPolygon);
+      return { nama, lat: point.lat, lng: point.lng };
+    });
+  }, [geoData]);
 
   function baseStyleFor(nama: string | undefined, jumlah: number): PathOptions {
     return {
@@ -139,6 +155,18 @@ export default function KecamatanChoropleth({ counts }: { counts: Map<string, nu
           onEachFeature={onEachFeature}
         />
       )}
+      {labelPositions.map((p) => (
+        <Marker
+          key={p.nama}
+          position={[p.lat, p.lng]}
+          interactive={false}
+          icon={L.divIcon({
+            className: "peta-kecamatan-label-icon",
+            html: `<span class="peta-kecamatan-label">${p.nama}</span>`,
+            iconSize: [0, 0],
+          })}
+        />
+      ))}
     </LayerGroup>
   );
 }

@@ -4,6 +4,7 @@ import { useActionState, useRef, useState, useTransition, type ChangeEvent } fro
 import { createMonev, deleteMonev } from "@/lib/actions/riwayat";
 import { compressImage } from "@/lib/compress-image";
 import { KONDISI_OPTIONS, kondisiLabel } from "@/lib/kondisi-alsintan";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 
 interface MonevEntry {
   id: string;
@@ -32,6 +33,7 @@ export default function RiwayatMonev({
   const [state, formAction, isPending] = useActionState(boundCreate, { error: null });
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
+  const { confirm, dialog } = useConfirmDialog();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -50,8 +52,9 @@ export default function RiwayatMonev({
     }
   }
 
-  function handleDelete(id: string) {
-    if (!window.confirm("Hapus catatan monev ini?")) return;
+  async function handleDelete(id: string) {
+    const ok = await confirm("Hapus catatan monev ini?", { title: "Hapus catatan monev", confirmLabel: "Hapus", danger: true });
+    if (!ok) return;
     setDeleteError(null);
     startDeleteTransition(async () => {
       const result = await deleteMonev(id, idAlsintan);
@@ -128,6 +131,7 @@ export default function RiwayatMonev({
           ))}
         </ul>
       )}
+      {dialog}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateAlsintan } from "@/lib/actions/alsintan";
 import FormAlsintan from "@/components/FormAlsintan";
 import { getAlsintanFormData } from "@/lib/alsintan-form-data";
+import { canManageAlsintanRow } from "@/lib/alsintan-permissions";
 
 export default async function EditAlsintanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,7 +21,8 @@ export default async function EditAlsintanPage({ params }: { params: Promise<{ i
 
   if (!alsintan) notFound();
 
-  const formData = await getAlsintanFormData();
+  const { profile, ...formData } = await getAlsintanFormData();
+  if (!canManageAlsintanRow(profile, { kecamatan: alsintan.kecamatan, desa: alsintan.desa })) redirect(`/alsintan/${id}`);
   const boundUpdate = updateAlsintan.bind(null, id);
 
   return (

@@ -15,6 +15,7 @@ const UNIQUE_CONSTRAINT_LABELS: Record<string, string> = {
   master_jenis_alsintan_kode_singkat_key: "Kode singkat jenis alsintan",
   master_sumber_dana_nama_sumber_key: "Nama sumber dana",
   alsintan_id_unit_key: "ID unit alsintan",
+  profiles_nip_key: "NIP",
 };
 
 export function friendlyDbError(error: DbErrorLike, fallback = "Terjadi kesalahan, coba lagi."): string {
@@ -24,7 +25,7 @@ export function friendlyDbError(error: DbErrorLike, fallback = "Terjadi kesalaha
   if (code === "23505") {
     const constraint = message.match(/unique constraint "([^"]+)"/)?.[1];
     const label = constraint ? UNIQUE_CONSTRAINT_LABELS[constraint] : undefined;
-    return label ? `${label} ini sudah dipakai -- coba nama/kode lain.` : "Data ini sudah ada sebelumnya.";
+    return label ? `${label} ini sudah dipakai, gunakan yang lain.` : "Data ini sudah ada sebelumnya.";
   }
   if (code === "23503") {
     return "Data ini masih terhubung dengan data lain, jadi tidak bisa diproses.";

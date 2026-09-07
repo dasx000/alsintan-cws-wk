@@ -11,7 +11,7 @@ export default async function JenisAlsintanPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <h1 className="mb-6 text-xl font-semibold text-gray-900">Jenis Alsintan</h1>
       <JenisAlsintanManager initialData={jenisList ?? []} isAdmin={profile?.role === "admin"} />
     </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Map, Tractor, Wrench, UserCog, LogOut, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Map, Tractor, Wrench, UserCog, UserCircle, LogOut, type LucideIcon } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
 
 interface NavItem {
@@ -13,10 +13,12 @@ interface NavItem {
 
 const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/#sebaran", label: "Peta Sebaran", icon: Map },
   { href: "/alsintan", label: "Alsintan", icon: Tractor },
   { href: "/jenis-alsintan", label: "Jenis Alsintan", icon: Wrench },
 ];
+
+const PETA_SEBARAN_ITEM: NavItem = { href: "/#sebaran", label: "Peta Sebaran", icon: Map };
+const PROFIL_ITEM: NavItem = { href: "/profil", label: "Profil Saya", icon: UserCircle };
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -26,14 +28,18 @@ export default function AppShell({
   children,
   userLabel,
   role,
+  koordinator,
 }: {
   children: React.ReactNode;
   userLabel: string;
   role: string;
+  koordinator: boolean;
 }) {
   const pathname = usePathname();
-  const navItems =
-    role === "admin" ? [...BASE_NAV_ITEMS, { href: "/pengguna", label: "Pengguna", icon: UserCog }] : BASE_NAV_ITEMS;
+  const canManagePengguna = role === "admin" || (role === "penyuluh" && koordinator);
+  const navItems = canManagePengguna
+    ? [...BASE_NAV_ITEMS, { href: "/pengguna", label: "Pengguna", icon: UserCog }, PETA_SEBARAN_ITEM, PROFIL_ITEM]
+    : [...BASE_NAV_ITEMS, PETA_SEBARAN_ITEM, PROFIL_ITEM];
 
   return (
     <div className="min-h-screen bg-gray-50 sm:flex">

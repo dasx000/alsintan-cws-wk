@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
+import { canManageAlsintanRow } from "@/lib/alsintan-permissions";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
 import RiwayatMonev from "@/components/riwayat/RiwayatMonev";
 
@@ -59,8 +60,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
 
   if (!raw) notFound();
   const alsintan = raw as unknown as AlsintanDetail;
-  const canWrite = profile?.role === "admin" || profile?.role === "penyuluh";
-  const canDelete = profile?.role === "admin";
+  const canManage = canManageAlsintanRow(profile, { kecamatan: alsintan.kecamatan, desa: alsintan.desa });
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -131,7 +131,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
         </div>
       )}
 
-      {canWrite && (
+      {canManage && (
         <div className="mb-6 flex gap-2">
           <Link
             href={`/alsintan/${id}/edit`}
@@ -139,12 +139,12 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
           >
             <Pencil size={15} /> Edit
           </Link>
-          {canDelete && <DeleteAlsintanButton id={id} idUnit={alsintan.id_unit} />}
+          <DeleteAlsintanButton id={id} idUnit={alsintan.id_unit} />
         </div>
       )}
 
       <div className="space-y-6">
-        <RiwayatMonev idAlsintan={id} entries={monevRaw ?? []} canWrite={canWrite} canDelete={canDelete} />
+        <RiwayatMonev idAlsintan={id} entries={monevRaw ?? []} canWrite={canManage} canDelete={canManage} />
       </div>
     </div>
   );

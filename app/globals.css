@@ -80,3 +80,29 @@ body {
 .peta-desa-label::before {
   display: none;
 }
+
+/* Label nama kecamatan di KecamatanChoropleth (peta sebaran) -- divIcon
+   custom (bukan tooltip Leaflet, biar tooltip hover yang menampilkan
+   jumlah unit tetap terpisah/tidak tertimpa). Ukurannya responsif lewat
+   clamp(): kecil di layar sempit (HP), tetap terbaca di layar lebar,
+   tidak pernah membesar berlebihan. */
+.leaflet-div-icon.peta-kecamatan-label-icon {
+  background: transparent;
+  border: none;
+}
+
+.peta-kecamatan-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: clamp(9px, 1.6vw, 12px);
+  font-weight: 700;
+  color: #111827;
+  text-shadow:
+    0 1px 2px #fff,
+    0 -1px 2px #fff,
+    1px 0 2px #fff,
+    -1px 0 2px #fff,
+    0 0 3px #fff;
+  pointer-events: none;
+}

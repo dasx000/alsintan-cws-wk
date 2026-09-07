@@ -4,10 +4,12 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Tractor } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { resolveLoginEmail } from "@/lib/actions/auth";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,11 +19,18 @@ export default function LoginPage() {
     setError(null);
     setIsSubmitting(true);
 
+    const email = await resolveLoginEmail(identifier);
+    if (!email) {
+      setError("Username atau password salah.");
+      setIsSubmitting(false);
+      return;
+    }
+
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError("Email atau password salah.");
+      setError("Username atau password salah.");
       setIsSubmitting(false);
       return;
     }
@@ -59,15 +68,17 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-                  Email
+                <label htmlFor="identifier" className="mb-1 block text-sm font-medium text-gray-700">
+                  Username
                 </label>
                 <input
-                  id="email"
-                  type="email"
+                  id="identifier"
+                  type="text"
+                  autoComplete="username"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Email atau NIP"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
               </div>
@@ -76,9 +87,8 @@ export default function LoginPage() {
                 <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

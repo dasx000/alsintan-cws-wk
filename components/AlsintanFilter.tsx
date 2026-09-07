@@ -15,7 +15,7 @@ const KATEGORI_OPTIONS = [
   { value: "pasca_panen", label: "Pascapanen" },
 ];
 
-const FILTER_KEYS = ["jenis", "kategori", "kondisi", "kecamatan", "tahun", "q"];
+const FILTER_KEYS = ["jenis", "kategori", "kondisi", "kecamatan", "desa", "tahun", "q"];
 
 const selectClass =
   "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500";
@@ -23,10 +23,12 @@ const selectClass =
 export default function AlsintanFilter({
   jenisOptions,
   kecamatanOptions,
+  desaOptions,
   tahunOptions,
 }: {
   jenisOptions: Option[];
   kecamatanOptions: Option[];
+  desaOptions: Option[];
   tahunOptions: Option[];
 }) {
   const router = useRouter();
@@ -110,6 +112,19 @@ export default function AlsintanFilter({
       >
         <option value="">Semua Kecamatan</option>
         {kecamatanOptions.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={searchParams.get("desa") ?? ""}
+        onChange={(e) => updateParam("desa", e.target.value)}
+        className={selectClass}
+      >
+        <option value="">Semua Desa</option>
+        {desaOptions.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
