@@ -109,7 +109,7 @@ export default async function AlsintanPage({
   const rangeStart = count && count > 0 ? from + 1 : 0;
   const rangeEnd = count ? Math.min(to + 1, count) : 0;
 
-  const tahunOptions = Array.from(new Set((tahunRows ?? []).map((r) => r.tahun_pengadaan)))
+  const tahunOptions = Array.from(new Set((tahunRows ?? []).map((r) => r.tahun_pengadaan).filter((t) => t != null)))
     .sort((a, b) => b - a)
     .map((t) => ({ value: String(t), label: String(t) }));
 
@@ -142,6 +142,12 @@ export default async function AlsintanPage({
     return `/alsintan?${params.toString()}`;
   }
 
+  const exportParams = new URLSearchParams();
+  Object.entries(activeFilters).forEach(([key, value]) => {
+    if (value) exportParams.set(key, value);
+  });
+  const exportHref = `/api/alsintan/export${exportParams.toString() ? `?${exportParams.toString()}` : ""}`;
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-6 flex items-center justify-between">
@@ -151,7 +157,7 @@ export default async function AlsintanPage({
         </div>
         <div className="flex gap-2">
           <a
-            href="/api/alsintan/export"
+            href={exportHref}
             className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <Download size={16} />

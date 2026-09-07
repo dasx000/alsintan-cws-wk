@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, Marker, GeoJSON, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import type { Feature, FeatureCollection } from "geojson";
+import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
 import MapBaseLayers from "@/components/MapBaseLayers";
+import { getRandomPointInPolygon } from "@/lib/polygon-label-point";
 
 const markerIcon = L.icon({
   iconUrl: "/leaflet/marker-icon.png",
@@ -81,11 +82,10 @@ function KecamatanHighlight({ kecamatanNama }: { kecamatanNama: string | null | 
   );
 }
 
-// Batas + nama tiap desa di dalam kecamatan yang dipilih, diambil dari data
-// batas desa resmi BIG yang sama dengan yang dipakai di seluruh aplikasi --
-// bukan dari label basemap (OSM/Esri), yang kualitasnya tidak terjamin untuk
-// desa-desa kecil di Way Kanan.
-function DesaHighlight({ kecamatanNama }: { kecamatanNama: string | null | undefined }) {
+// Fetch sekali di level MapContainer, dipakai bareng oleh DesaHighlight
+// (gambar batas desa) dan AutoPinOnDesaChange (cari titik acak dalam desa) --
+// supaya file 380KB-an ini cuma di-fetch sekali, tidak dobel.
+function useDesaGeoData(): FeatureCollection | null {
   const [geoData, setGeoData] = useState<FeatureCollection | null>(null);
 
   useEffect(() => {
@@ -100,6 +100,20 @@ function DesaHighlight({ kecamatanNama }: { kecamatanNama: string | null | undef
     };
   }, []);
 
+  return geoData;
+}
+
+// Batas + nama tiap desa di dalam kecamatan yang dipilih, diambil dari data
+// batas desa resmi BIG yang sama dengan yang dipakai di seluruh aplikasi --
+// bukan dari label basemap (OSM/Esri), yang kualitasnya tidak terjamin untuk
+// desa-desa kecil di Way Kanan.
+function DesaHighlight({
+  kecamatanNama,
+  geoData,
+}: {
+  kecamatanNama: string | null | undefined;
+  geoData: FeatureCollection | null;
+}) {
   if (!geoData || !kecamatanNama) return null;
 
   const desaFeatures = geoData.features.filter(
@@ -129,26 +143,74 @@ function DesaHighlight({ kecamatanNama }: { kecamatanNama: string | null | undef
   );
 }
 
+// Begitu user pilih/ganti desa, langsung taruh marker di titik acak dalam
+// batas desa itu -- biar user tidak mulai dari peta kosong/titik tengah
+// kabupaten, tinggal geser-geser sedikit buat presisi. Dilewati saat mount
+// pertama (pola sama seperti KecamatanHighlight) supaya form edit yang sudah
+// punya koordinat presisi tidak tiba-tiba diacak ulang cuma karena halaman
+// dibuka -- cuma jalan kalau desa BERUBAH setelah itu.
+function AutoPinOnDesaChange({
+  desaNama,
+  kecamatanNama,
+  geoData,
+  onChange,
+}: {
+  desaNama: string | null | undefined;
+  kecamatanNama: string | null | undefined;
+  geoData: FeatureCollection | null;
+  onChange: (lat: number, lng: number) => void;
+}) {
+  const map = useMap();
+  const isFirstRun = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+    if (!desaNama || !geoData) return;
+
+    const feature = geoData.features.find((f) => {
+      const namaCocok = (f.properties?.NAMOBJ as string | undefined)?.trim().toLowerCase() === desaNama.trim().toLowerCase();
+      if (!namaCocok) return false;
+      if (!kecamatanNama) return true;
+      return (f.properties?.WADMKC as string | undefined)?.trim().toLowerCase() === kecamatanNama.trim().toLowerCase();
+    });
+    if (!feature) return;
+
+    const point = getRandomPointInPolygon(feature.geometry as Polygon | MultiPolygon);
+    onChange(point.lat, point.lng);
+    map.setView([point.lat, point.lng], 15);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desaNama]);
+
+  return null;
+}
+
 export default function PetaLokasiPicker({
   latitude,
   longitude,
   kecamatanNama,
+  desaNama,
   onChange,
 }: {
   latitude: number | null;
   longitude: number | null;
   kecamatanNama?: string | null;
+  desaNama?: string | null;
   onChange: (lat: number, lng: number) => void;
 }) {
   const hasPosition = latitude != null && longitude != null;
   const center: [number, number] = hasPosition ? [latitude, longitude] : WAY_KANAN_CENTER;
+  const desaGeoData = useDesaGeoData();
 
   return (
     <div className="overflow-hidden rounded-md border border-gray-300">
       <MapContainer center={center} zoom={hasPosition ? 15 : 10} style={{ height: "260px", width: "100%" }}>
         <MapBaseLayers />
         <KecamatanHighlight kecamatanNama={kecamatanNama} />
-        <DesaHighlight kecamatanNama={kecamatanNama} />
+        <DesaHighlight kecamatanNama={kecamatanNama} geoData={desaGeoData} />
+        <AutoPinOnDesaChange desaNama={desaNama} kecamatanNama={kecamatanNama} geoData={desaGeoData} onChange={onChange} />
         <ClickHandler onPick={onChange} />
         {hasPosition && (
           <Marker

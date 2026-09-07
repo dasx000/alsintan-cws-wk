@@ -23,6 +23,7 @@ interface ParsedAlsintan {
   tanggal_bast: string | null;
   kondisi: string;
   catatan: string | null;
+  luas_lahan_ha: number | null;
   latitude: number | null;
   longitude: number | null;
 }
@@ -43,6 +44,13 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
   const lngRaw = formData.get("longitude") as string;
   const latitude = latRaw ? Number(latRaw) : null;
   const longitude = lngRaw ? Number(lngRaw) : null;
+
+  // Opsional -- tidak masuk validasi wajib di bawah.
+  const luasLahanRaw = (formData.get("luas_lahan_ha") as string)?.trim();
+  const luas_lahan_ha = luasLahanRaw ? Number(luasLahanRaw) : null;
+  if (luasLahanRaw && (Number.isNaN(luas_lahan_ha) || (luas_lahan_ha as number) < 0)) {
+    return { error: "Luas Lahan (Ha) tidak valid.", data: null };
+  }
 
   if (
     !id_jenis ||
@@ -75,6 +83,7 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
       tanggal_bast,
       kondisi,
       catatan,
+      luas_lahan_ha,
       latitude,
       longitude,
     },

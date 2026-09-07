@@ -1,18 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/get-current-profile";
+import { getAlsintanFilterScope } from "@/lib/alsintan-permissions";
 import { kondisiLabel } from "@/lib/kondisi-alsintan";
 import { friendlyDbError } from "@/lib/friendly-db-error";
 
 interface ExportRow {
   id_unit: string;
-  tahun_pengadaan: number;
+  tahun_pengadaan: number | null;
   no_bast: string | null;
   tanggal_bast: string | null;
   kondisi: string;
   penerima: string | null;
   desa: string | null;
   kecamatan: string | null;
+  luas_lahan_ha: number | null;
   catatan: string | null;
   master_jenis_alsintan: { nama_jenis: string; kategori: string } | null;
   master_sumber_dana: { nama_sumber: string } | null;
@@ -47,20 +50,59 @@ const COLUMNS = [
   { header: "Kecamatan", key: "kecamatan", width: 18 },
   { header: "Desa", key: "desa", width: 18 },
   { header: "Kelompok Penerima", key: "penerima", width: 24 },
+  { header: "Luas Lahan (Ha)", key: "luas_lahan_ha", width: 16 },
   { header: "Catatan", key: "catatan", width: 30 },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
+  const { profile } = await getCurrentProfile();
+  const scope = getAlsintanFilterScope(profile);
 
-  const { data, error } = await supabase
-    .from("alsintan")
-    .select(
-      `id_unit, tahun_pengadaan, no_bast, tanggal_bast, kondisi, penerima, desa, kecamatan, catatan,
-       master_jenis_alsintan(nama_jenis, kategori),
-       master_sumber_dana(nama_sumber)`
-    )
-    .order("created_at", { ascending: false });
+  const params = request.nextUrl.searchParams;
+  const jenis = params.get("jenis");
+  const kategori = params.get("kategori");
+  const kondisi = params.get("kondisi");
+  const kecamatan = params.get("kecamatan");
+  const desa = params.get("desa");
+  const tahun = params.get("tahun");
+  const q = params.get("q");
+
+  // Sama seperti daftar Alsintan: kolom kategori butuh inner join supaya bisa
+  // difilter di PostgREST.
+  let selectStr =
+    "id_unit, tahun_pengadaan, no_bast, tanggal_bast, kondisi, penerima, desa, kecamatan, luas_lahan_ha, catatan, master_jenis_alsintan(nama_jenis, kategori), master_sumber_dana(nama_sumber)";
+  if (kategori) selectStr = selectStr.replace("master_jenis_alsintan(", "master_jenis_alsintan!inner(");
+
+  let query = supabase.from("alsintan").select(selectStr);
+
+  // Kunci wilayah -- SAMA seperti halaman daftar (lihat app/(app)/alsintan/page.tsx):
+  // koordinator/penyuluh hanya boleh ekspor data di wilayahnya sendiri, diterapkan
+  // di server supaya tidak bisa dilewati dengan memanggil endpoint ini langsung.
+  if (scope.lockedKecamatan) {
+    query = query.in("kecamatan", scope.lockedKecamatan.length > 0 ? scope.lockedKecamatan : ["__none__"]);
+  }
+  if (scope.lockedDesa) {
+    query = query.in("desa", scope.lockedDesa.length > 0 ? scope.lockedDesa : ["__none__"]);
+  }
+  if (jenis) query = query.eq("id_jenis", jenis);
+  if (kondisi) query = query.eq("kondisi", kondisi);
+  if (kecamatan) query = query.eq("kecamatan", kecamatan);
+  if (desa) query = query.eq("desa", desa);
+  if (tahun) query = query.eq("tahun_pengadaan", Number(tahun));
+  if (kategori) query = query.eq("master_jenis_alsintan.kategori", kategori);
+  if (q) {
+    const safeQ = q.trim().replace(/[,()"\\]/g, " ").trim();
+    if (safeQ) {
+      const pattern = `%${safeQ}%`;
+      query = query.or(
+        `id_unit.ilike.${pattern},penerima.ilike.${pattern},desa.ilike.${pattern},kecamatan.ilike.${pattern}`
+      );
+    }
+  }
+  query = query.order("created_at", { ascending: false });
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: friendlyDbError(error, "Gagal mengambil data untuk ekspor.") }, { status: 500 });
@@ -89,13 +131,14 @@ export async function GET() {
       jenis: r.master_jenis_alsintan?.nama_jenis ?? "-",
       kategori: kategori ? (KATEGORI_LABEL[kategori] ?? kategori) : "-",
       kondisi: kondisiLabel(r.kondisi),
-      tahun: r.tahun_pengadaan,
+      tahun: r.tahun_pengadaan ?? "",
       sumber_dana: r.master_sumber_dana?.nama_sumber ?? "",
       no_bast: r.no_bast ?? "",
       tanggal_bast: r.tanggal_bast ?? "",
       kecamatan: r.kecamatan ?? "",
       desa: r.desa ?? "",
       penerima: r.penerima ?? "",
+      luas_lahan_ha: r.luas_lahan_ha ?? "",
       catatan: r.catatan ?? "",
     });
 

@@ -116,6 +116,7 @@ export async function importAlsintanExcel(
     penerima: string;
     catatan: string | null;
     jumlahUnit: number;
+    luasLahanHa: number | null;
   }
 
   const parsedRows: ParsedRow[] = [];
@@ -137,6 +138,7 @@ export async function importAlsintanExcel(
     const desaText = cellText(row, colIndex, "Desa");
     const catatanText = cellText(row, colIndex, "Catatan");
     const jumlahUnitText = cellText(row, colIndex, "Jumlah Unit");
+    const luasLahanText = cellText(row, colIndex, "Luas Lahan (Ha)");
 
     const jenis = jenisMap.get(normalize(jenisText));
     if (!jenis) {
@@ -190,6 +192,16 @@ export async function importAlsintanExcel(
       jumlahUnit = n;
     }
 
+    let luasLahanHa: number | null = null;
+    if (luasLahanText) {
+      const n = Number(luasLahanText);
+      if (Number.isNaN(n) || n < 0) {
+        rowErrors.push({ row: r, message: `Luas Lahan (Ha) "${luasLahanText}" tidak valid.` });
+        continue;
+      }
+      luasLahanHa = n;
+    }
+
     parsedRows.push({
       idJenis: jenis.id,
       kodeKategori: jenis.kategori === "pasca_panen" ? "PS" : "PP",
@@ -204,6 +216,7 @@ export async function importAlsintanExcel(
       penerima: penerimaText,
       catatan: catatanText || null,
       jumlahUnit,
+      luasLahanHa,
     });
   }
 
@@ -264,6 +277,7 @@ export async function importAlsintanExcel(
         desa: row.desa,
         penerima: row.penerima,
         catatan: row.catatan,
+        luas_lahan_ha: row.luasLahanHa,
         id_unit: ids.shift(),
         dibuat_oleh: user?.id,
       });

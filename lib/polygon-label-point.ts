@@ -119,3 +119,45 @@ export function getPolygonLabelPoint(geometry: Polygon | MultiPolygon): { lat: n
 
   return { lat: point[1], lng: point[0] };
 }
+
+// Titik ACAK yang dijamin di dalam polygon/multipolygon -- beda dari
+// getPolygonLabelPoint (yang deterministik, buat penempatan label). Dipakai
+// buat auto-isi koordinat form saat user baru pilih desa, biar marker-nya
+// tidak nempel di 1 titik yang sama terus (rejection sampling di bounding
+// box, part terbesar dulu buat MultiPolygon supaya tidak jatuh di
+// pulau/enclave kecil).
+export function getRandomPointInPolygon(geometry: Polygon | MultiPolygon): { lat: number; lng: number } {
+  const polygons: PolygonCoords[] = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+
+  let mainPolygon = polygons[0];
+  let mainArea = ringArea(polygons[0][0]);
+  for (const p of polygons.slice(1)) {
+    const a = ringArea(p[0]);
+    if (a > mainArea) {
+      mainArea = a;
+      mainPolygon = p;
+    }
+  }
+
+  const exterior = mainPolygon[0];
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
+  for (const [x, y] of exterior) {
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+
+  for (let tries = 0; tries < 300; tries++) {
+    const x = minX + Math.random() * (maxX - minX);
+    const y = minY + Math.random() * (maxY - minY);
+    if (pointInPolygon([x, y], mainPolygon)) return { lat: y, lng: x };
+  }
+
+  const avgX = exterior.reduce((s, p) => s + p[0], 0) / exterior.length;
+  const avgY = exterior.reduce((s, p) => s + p[1], 0) / exterior.length;
+  return { lat: avgY, lng: avgX };
+}

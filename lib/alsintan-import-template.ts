@@ -18,6 +18,7 @@ const DATA_HEADERS = [
   "Desa",
   "Kelompok Penerima",
   "Jumlah Unit",
+  "Luas Lahan (Ha)",
   "Catatan",
 ];
 
@@ -32,6 +33,7 @@ const CONTOH_ROW = [
   "",
   "Kelompok Tani Contoh",
   1,
+  "",
   "",
 ];
 

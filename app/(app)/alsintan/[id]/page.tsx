@@ -19,6 +19,7 @@ interface AlsintanDetail {
   desa: string | null;
   kecamatan: string | null;
   catatan: string | null;
+  luas_lahan_ha: number | null;
   foto_url: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -45,7 +46,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       .from("alsintan")
       .select(
         `id, id_unit, tahun_pengadaan, no_bast, tanggal_bast,
-           kondisi, penerima, desa, kecamatan, catatan, foto_url, latitude, longitude,
+           kondisi, penerima, desa, kecamatan, catatan, luas_lahan_ha, foto_url, latitude, longitude,
            master_jenis_alsintan(nama_jenis),
            master_sumber_dana(nama_sumber)`
       )
@@ -104,6 +105,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
           <Field label="Kelompok" value={alsintan.penerima} />
           <Field label="Desa" value={alsintan.desa} />
           <Field label="Kecamatan" value={alsintan.kecamatan} />
+          <Field label="Luas Lahan (Ha)" value={alsintan.luas_lahan_ha} />
         </dl>
       </div>
 

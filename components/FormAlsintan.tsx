@@ -82,6 +82,7 @@ export interface AlsintanInitialData {
   desa: string | null;
   kecamatan: string | null;
   catatan: string | null;
+  luas_lahan_ha: number | null;
   foto_url: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -309,7 +310,7 @@ export default function FormAlsintan({
       </SectionCard>
 
       <SectionCard icon={<Users size={16} />} title="Penerima" className="bg-gray-50">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div>
             <FieldLabel>Kecamatan</FieldLabel>
             <select
@@ -351,6 +352,19 @@ export default function FormAlsintan({
           <div>
             <FieldLabel>Kelompok Penerima</FieldLabel>
             <input name="penerima" defaultValue={initialData?.penerima ?? ""} required className={inputClass} />
+          </div>
+
+          <div>
+            <FieldLabel required={false}>Luas Lahan (Ha)</FieldLabel>
+            <input
+              name="luas_lahan_ha"
+              type="number"
+              step="0.01"
+              min={0}
+              defaultValue={initialData?.luas_lahan_ha ?? ""}
+              placeholder="- opsional -"
+              className={inputClass}
+            />
           </div>
         </div>
         <input type="hidden" name="kecamatan" value={kecamatanNama} />
@@ -420,6 +434,7 @@ export default function FormAlsintan({
             latitude={latitude}
             longitude={longitude}
             kecamatanNama={kecamatanNama}
+            desaNama={desaNama}
             onChange={handleMapPick}
           />
         </div>
