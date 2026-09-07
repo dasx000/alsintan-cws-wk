@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import ExcelJS from "exceljs";
 import { createClient } from "@/lib/supabase/server";
 import { getKecamatanDesaForProfile } from "@/lib/wilayah";
+import { friendlyDbError } from "@/lib/friendly-db-error";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
 import { generateIdUnitBatch } from "@/lib/generate-id-unit";
 
@@ -276,7 +277,7 @@ export async function importAlsintanExcel(
     const { error } = await supabase.from("alsintan").insert(chunk);
     if (error) {
       return {
-        error: `Gagal menyimpan data (${insertedCount} baris sudah tersimpan sebelum error ini): ${error.message}`,
+        error: `${friendlyDbError(error, "Gagal menyimpan data")} (${insertedCount} baris sudah tersimpan sebelum error ini, sisanya batal.)`,
       };
     }
     insertedCount += chunk.length;

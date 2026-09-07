@@ -22,19 +22,37 @@ const PALETTE = [
   { fill: "#e0e7ff", stroke: "#4f46e5" },
 ];
 
+const LAINNYA_COLOR = { fill: "#f3f4f6", stroke: "#6b7280" };
+
 export default function HorizontalBarList({
   icon,
   title,
   data,
   emptyLabel = "Belum ada data.",
+  maxItems,
 }: {
   icon: ReactNode;
   title: string;
   data: HorizontalBarDatum[];
   emptyLabel?: string;
+  // Kalau diisi, cuma tampilkan top-N (urut terbanyak), sisanya digabung
+  // jadi satu baris "Lainnya" -- supaya daftar yang jenisnya banyak (mis.
+  // Unit per Jenis) tidak jadi terlalu panjang/berantakan.
+  maxItems?: number;
 }) {
   const sorted = [...data].sort((a, b) => b.jumlah - a.jumlah);
-  const chartData = sorted.map((d, i) => ({ ...d, ...PALETTE[i % PALETTE.length] }));
+  const limited =
+    maxItems && sorted.length > maxItems
+      ? [
+          ...sorted.slice(0, maxItems),
+          { name: "Lainnya", jumlah: sorted.slice(maxItems).reduce((sum, d) => sum + d.jumlah, 0) },
+        ]
+      : sorted;
+  const chartData = limited.map((d, i) =>
+    d.name === "Lainnya" && maxItems && sorted.length > maxItems
+      ? { ...d, ...LAINNYA_COLOR }
+      : { ...d, ...PALETTE[i % PALETTE.length] }
+  );
   const hasData = chartData.some((d) => d.jumlah > 0);
 
   return (

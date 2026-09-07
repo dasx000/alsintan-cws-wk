@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyDbError } from "@/lib/friendly-db-error";
 
 export interface RiwayatActionState {
   error: string | null;
@@ -29,7 +30,7 @@ export async function createMonev(
     const { error: uploadError } = await supabase.storage.from("alsintan-foto").upload(path, fotoFile, {
       contentType: fotoFile.type || "image/jpeg",
     });
-    if (uploadError) return { error: `Gagal upload foto: ${uploadError.message}` };
+    if (uploadError) return { error: "Gagal mengunggah foto. Coba lagi." };
     const { data } = supabase.storage.from("alsintan-foto").getPublicUrl(path);
     foto_url = data.publicUrl;
   }
@@ -42,7 +43,7 @@ export async function createMonev(
     foto_url,
     petugas,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menyimpan hasil kunjungan.") };
 
   revalidatePath(`/alsintan/${idAlsintan}`);
   return { error: null };
@@ -51,7 +52,7 @@ export async function createMonev(
 export async function deleteMonev(id: string, idAlsintan: string): Promise<RiwayatActionState> {
   const supabase = await createClient();
   const { error } = await supabase.from("monev").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menghapus catatan kunjungan.") };
 
   revalidatePath(`/alsintan/${idAlsintan}`);
   return { error: null };

@@ -5,7 +5,18 @@ import dynamic from "next/dynamic";
 import { Camera, ClipboardList, Copy, MapPin, StickyNote, Users } from "lucide-react";
 import type { AlsintanActionState } from "@/lib/actions/alsintan";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
+import { KATEGORI_OPTIONS } from "@/lib/jenis-alsintan-kategori";
+import { parseCoordinateInput } from "@/lib/parse-coordinate";
 import { compressImage } from "@/lib/compress-image";
+
+function FieldLabel({ children, required = true }: { children: ReactNode; required?: boolean }) {
+  return (
+    <label className="mb-1 block text-sm font-medium text-gray-700">
+      {children}
+      {required && <span className="text-red-600"> *</span>}
+    </label>
+  );
+}
 
 function SectionCard({
   icon,
@@ -41,6 +52,7 @@ const PetaLokasiPicker = dynamic(() => import("@/components/PetaLokasiPicker"), 
 interface JenisOption {
   id: string;
   nama_jenis: string;
+  kategori: string;
 }
 
 interface SumberDanaOption {
@@ -109,6 +121,13 @@ export default function FormAlsintan({
 
   const [selectedDesa, setSelectedDesa] = useState(initialDesa?.id_desa ?? "");
 
+  const initialJenis = initialData ? jenisList.find((j) => j.id === initialData.id_jenis) : undefined;
+  const [selectedKategori, setSelectedKategori] = useState(initialJenis?.kategori ?? KATEGORI_OPTIONS[0].value);
+  const [selectedJenis, setSelectedJenis] = useState(initialJenis?.id ?? "");
+
+  const filteredJenis = jenisList.filter((j) => j.kategori === selectedKategori);
+  const jenisValue = filteredJenis.some((j) => j.id === selectedJenis) ? selectedJenis : "";
+
   const [state, formAction, isPending] = useActionState(action, { error: null });
 
   const filteredDesa = desaList.filter((d) => d.id_kecamatan === selectedKecamatan);
@@ -123,6 +142,53 @@ export default function FormAlsintan({
   const [compressError, setCompressError] = useState<string | null>(null);
   const [latitude, setLatitude] = useState<number | null>(initialData?.latitude ?? null);
   const [longitude, setLongitude] = useState<number | null>(initialData?.longitude ?? null);
+  const [coordText, setCoordText] = useState(
+    initialData?.latitude != null && initialData?.longitude != null
+      ? `${initialData.latitude.toFixed(6)}, ${initialData.longitude.toFixed(6)}`
+      : ""
+  );
+  const [coordError, setCoordError] = useState<string | null>(null);
+
+  // Input teks "lintang, bujur" dua arah dengan peta: ketik di sini update
+  // posisi marker, klik/geser marker di peta update balik teks ini (lihat
+  // handleMapPick). Formatnya dibikin longgar lewat parseCoordinateInput --
+  // titik ATAU koma sbg desimal, koma/titik-koma/spasi sbg pemisah, boleh
+  // ada huruf mata angin (N/S/E/W) atau notasi derajat-menit-detik, karena
+  // hasil copy-paste dari app peta di tiap HP formatnya beda-beda.
+  function handleCoordTextChange(e: ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setCoordText(value);
+
+    if (!value.trim()) {
+      setCoordError(null);
+      return;
+    }
+    const parsed = parseCoordinateInput(value);
+    if (!parsed) {
+      setCoordError("Format tidak dikenali. Boleh titik/koma, spasi/koma, huruf N/S/E/W, atau derajat-menit-detik.");
+      return;
+    }
+    setCoordError(null);
+    setLatitude(parsed.lat);
+    setLongitude(parsed.lng);
+  }
+
+  // Begitu user selesai (blur) -- misalnya setelah paste format aneh dari
+  // app peta HP -- tulis ulang ke format bersih, supaya langsung kelihatan
+  // konfirmasi kalau inputnya berhasil kebaca benar. Tidak dilakukan di
+  // handleCoordTextChange supaya tidak mengganggu saat masih mengetik.
+  function handleCoordBlur() {
+    if (!coordText.trim()) return;
+    const parsed = parseCoordinateInput(coordText);
+    if (parsed) setCoordText(`${parsed.lat.toFixed(6)}, ${parsed.lng.toFixed(6)}`);
+  }
+
+  function handleMapPick(lat: number, lng: number) {
+    setLatitude(lat);
+    setLongitude(lng);
+    setCoordText(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    setCoordError(null);
+  }
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -150,12 +216,37 @@ export default function FormAlsintan({
       <SectionCard icon={<ClipboardList size={16} />} title="Informasi Unit">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Jenis Alsintan</label>
-          <select name="id_jenis" defaultValue={initialData?.id_jenis} required className={inputClass}>
+          <FieldLabel>Kategori</FieldLabel>
+          <select
+            value={selectedKategori}
+            onChange={(e) => {
+              setSelectedKategori(e.target.value);
+              setSelectedJenis("");
+            }}
+            required
+            className={inputClass}
+          >
+            {KATEGORI_OPTIONS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {k.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <FieldLabel>Jenis Alsintan</FieldLabel>
+          <select
+            name="id_jenis"
+            value={jenisValue}
+            onChange={(e) => setSelectedJenis(e.target.value)}
+            required
+            className={inputClass}
+          >
             <option value="" disabled>
               Pilih jenis
             </option>
-            {jenisList.map((j) => (
+            {filteredJenis.map((j) => (
               <option key={j.id} value={j.id}>
                 {j.nama_jenis}
               </option>
@@ -164,7 +255,7 @@ export default function FormAlsintan({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Kondisi</label>
+          <FieldLabel>Kondisi</FieldLabel>
           <select name="kondisi" defaultValue={initialData?.kondisi ?? "baik"} required className={inputClass}>
             {KONDISI_OPTIONS.map((k) => (
               <option key={k.value} value={k.value}>
@@ -175,7 +266,7 @@ export default function FormAlsintan({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Tahun Pengadaan</label>
+          <FieldLabel>Tahun Pengadaan</FieldLabel>
           <input
             name="tahun_pengadaan"
             type="number"
@@ -186,9 +277,11 @@ export default function FormAlsintan({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Sumber Dana</label>
-          <select name="id_sumber_dana" defaultValue={initialData?.id_sumber_dana ?? ""} className={inputClass}>
-            <option value="">- Tidak diisi -</option>
+          <FieldLabel>Sumber Dana</FieldLabel>
+          <select name="id_sumber_dana" defaultValue={initialData?.id_sumber_dana ?? ""} required className={inputClass}>
+            <option value="" disabled>
+              Pilih sumber dana
+            </option>
             {sumberDanaList.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nama_sumber}
@@ -198,12 +291,12 @@ export default function FormAlsintan({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">No. BAST</label>
+          <FieldLabel required={false}>No. BAST</FieldLabel>
           <input name="no_bast" defaultValue={initialData?.no_bast ?? ""} className={inputClass} />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Tanggal BAST</label>
+          <FieldLabel required={false}>Tanggal BAST</FieldLabel>
           <input
             name="tanggal_bast"
             type="date"
@@ -218,13 +311,14 @@ export default function FormAlsintan({
       <SectionCard icon={<Users size={16} />} title="Penerima" className="bg-gray-50">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Kecamatan</label>
+            <FieldLabel>Kecamatan</FieldLabel>
             <select
               value={selectedKecamatan}
               onChange={(e) => {
                 setSelectedKecamatan(e.target.value);
                 setSelectedDesa("");
               }}
+              required
               className={inputClass}
             >
               {kecamatanList.map((k) => (
@@ -236,8 +330,13 @@ export default function FormAlsintan({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Desa</label>
-            <select value={desaValue} onChange={(e) => setSelectedDesa(e.target.value)} className={inputClass}>
+            <FieldLabel>Desa</FieldLabel>
+            <select
+              value={desaValue}
+              onChange={(e) => setSelectedDesa(e.target.value)}
+              required
+              className={inputClass}
+            >
               <option value="" disabled>
                 Pilih desa
               </option>
@@ -250,7 +349,7 @@ export default function FormAlsintan({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Kelompok Penerima</label>
+            <FieldLabel>Kelompok Penerima</FieldLabel>
             <input name="penerima" defaultValue={initialData?.penerima ?? ""} required className={inputClass} />
           </div>
         </div>
@@ -260,12 +359,14 @@ export default function FormAlsintan({
 
       {!initialData && (
         <SectionCard icon={<Copy size={16} />} title="Jumlah Unit Sekaligus" className="border-green-200 bg-green-50">
+          <FieldLabel>Jumlah unit</FieldLabel>
           <input
             name="jumlah_unit"
             type="number"
             min={1}
             max={100}
             defaultValue={1}
+            required
             className={`${inputClass} max-w-[140px] bg-white`}
           />
           <p className="mt-1 text-xs text-gray-600">
@@ -277,6 +378,7 @@ export default function FormAlsintan({
       )}
 
       <SectionCard icon={<Camera size={16} />} title="Foto Unit">
+        <FieldLabel required={false}>Foto</FieldLabel>
         <input
           ref={fileInputRef}
           name="foto"
@@ -301,20 +403,31 @@ export default function FormAlsintan({
       </SectionCard>
 
       <SectionCard icon={<MapPin size={16} />} title="Lokasi">
-        <PetaLokasiPicker
-          latitude={latitude}
-          longitude={longitude}
-          onChange={(lat, lng) => {
-            setLatitude(lat);
-            setLongitude(lng);
-          }}
+        <FieldLabel>Koordinat (lintang, bujur)</FieldLabel>
+        <input
+          type="text"
+          value={coordText}
+          onChange={handleCoordTextChange}
+          onBlur={handleCoordBlur}
+          placeholder="-4.337557, 104.587753"
+          required
+          className={`${inputClass} font-mono`}
         />
+        {coordError && <p className="mt-1 text-xs text-red-600">{coordError}</p>}
+
+        <div className="mt-3">
+          <PetaLokasiPicker
+            latitude={latitude}
+            longitude={longitude}
+            kecamatanNama={kecamatanNama}
+            onChange={handleMapPick}
+          />
+        </div>
         <input type="hidden" name="latitude" value={latitude ?? ""} />
         <input type="hidden" name="longitude" value={longitude ?? ""} />
         <p className="mt-1 text-xs text-gray-500">
-          {latitude != null && longitude != null
-            ? `Koordinat: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-            : "Klik di peta untuk menandai lokasi unit."}
+          Ketik/tempel koordinat langsung (bebas format -- titik atau koma, dengan/tanpa huruf N/S/E/W, boleh juga
+          derajat-menit-detik), atau klik/geser marker di peta -- keduanya saling mengikuti.
         </p>
       </SectionCard>
 

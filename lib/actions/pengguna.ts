@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyDbError } from "@/lib/friendly-db-error";
 
 export interface PenggunaActionState {
   error: string | null;
@@ -23,7 +24,7 @@ export async function updatePengguna(
     .update({ role, id_kecamatan_wilayah })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menyimpan perubahan pengguna.") };
 
   revalidatePath("/pengguna");
   return { error: null };

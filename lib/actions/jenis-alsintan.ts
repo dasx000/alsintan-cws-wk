@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyDbError } from "@/lib/friendly-db-error";
 
 export interface JenisAlsintanActionState {
   error: string | null;
@@ -23,7 +24,7 @@ export async function createJenisAlsintan(
   const supabase = await createClient();
   const { error } = await supabase.from("master_jenis_alsintan").insert({ nama_jenis, kategori });
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menambah jenis alsintan.") };
 
   revalidatePath("/jenis-alsintan");
   return { error: null };
@@ -47,7 +48,7 @@ export async function updateJenisAlsintan(
     .update({ nama_jenis, kategori })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal mengubah jenis alsintan.") };
 
   revalidatePath("/jenis-alsintan");
   return { error: null };
@@ -66,7 +67,7 @@ export async function deleteJenisAlsintan(id: string): Promise<JenisAlsintanActi
   }
 
   const { error } = await supabase.from("master_jenis_alsintan").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menghapus jenis alsintan.") };
 
   revalidatePath("/jenis-alsintan");
   return { error: null };

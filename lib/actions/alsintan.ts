@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateIdUnitBatch } from "@/lib/generate-id-unit";
+import { friendlyDbError } from "@/lib/friendly-db-error";
 
 export interface AlsintanActionState {
   error: string | null;
@@ -43,9 +44,20 @@ function parseAlsintanForm(formData: FormData): { error: string | null; data: Pa
   const latitude = latRaw ? Number(latRaw) : null;
   const longitude = lngRaw ? Number(lngRaw) : null;
 
-  if (!id_jenis || !penerima || !kecamatan || !tahun_pengadaan || Number.isNaN(tahun_pengadaan) || !kondisi) {
+  if (
+    !id_jenis ||
+    !penerima ||
+    !kecamatan ||
+    !desa ||
+    !tahun_pengadaan ||
+    Number.isNaN(tahun_pengadaan) ||
+    !kondisi ||
+    !id_sumber_dana ||
+    latitude == null ||
+    longitude == null
+  ) {
     return {
-      error: "Jenis alsintan, penerima, kecamatan, tahun pengadaan, dan kondisi wajib diisi.",
+      error: "Semua kolom wajib diisi, kecuali No. BAST, Tanggal BAST, dan Catatan.",
       data: null,
     };
   }
@@ -88,7 +100,7 @@ async function uploadFotoIfPresent(
   const { error: uploadError } = await supabase.storage.from(FOTO_BUCKET).upload(path, fotoFile, {
     contentType: fotoFile.type || "image/jpeg",
   });
-  if (uploadError) return { error: `Gagal upload foto: ${uploadError.message}`, fotoUrl: null };
+  if (uploadError) return { error: "Gagal mengunggah foto. Coba lagi.", fotoUrl: null };
 
   const { data } = supabase.storage.from(FOTO_BUCKET).getPublicUrl(path);
   return { error: null, fotoUrl: data.publicUrl };
@@ -168,7 +180,7 @@ export async function createAlsintan(
     if (error.code === "23505" && error.message.includes("id_unit")) {
       return { error: "ID unit yang dibuat bentrok (kemungkinan ada input bersamaan). Coba simpan ulang." };
     }
-    return { error: error.message };
+    return { error: friendlyDbError(error, "Gagal menyimpan data alsintan.") };
   }
 
   revalidatePath("/alsintan");
@@ -196,7 +208,7 @@ export async function updateAlsintan(
   if (fotoUrl) updateData.foto_url = fotoUrl;
 
   const { error } = await supabase.from("alsintan").update(updateData).eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menyimpan perubahan data alsintan.") };
 
   if (fotoUrl && existing?.foto_url) {
     const oldPath = extractStoragePath(existing.foto_url, FOTO_BUCKET);
@@ -214,7 +226,7 @@ export async function deleteAlsintan(id: string): Promise<{ error: string | null
   const { data: existing } = await supabase.from("alsintan").select("foto_url").eq("id", id).single();
 
   const { error } = await supabase.from("alsintan").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyDbError(error, "Gagal menghapus data alsintan.") };
 
   if (existing?.foto_url) {
     const path = extractStoragePath(existing.foto_url, FOTO_BUCKET);

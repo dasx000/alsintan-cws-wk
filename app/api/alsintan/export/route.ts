@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { createClient } from "@/lib/supabase/server";
 import { kondisiLabel } from "@/lib/kondisi-alsintan";
+import { friendlyDbError } from "@/lib/friendly-db-error";
 
 interface ExportRow {
   id_unit: string;
@@ -62,7 +63,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: friendlyDbError(error, "Gagal mengambil data untuk ekspor.") }, { status: 500 });
   }
 
   const rows = (data ?? []) as unknown as ExportRow[];

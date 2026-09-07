@@ -13,7 +13,7 @@ interface NavItem {
 
 const BASE_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/peta", label: "Peta Sebaran", icon: Map },
+  { href: "/#sebaran", label: "Peta Sebaran", icon: Map },
   { href: "/alsintan", label: "Alsintan", icon: Tractor },
   { href: "/jenis-alsintan", label: "Jenis Alsintan", icon: Wrench },
 ];

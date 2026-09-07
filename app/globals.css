@@ -57,3 +57,26 @@ body {
 .leaflet-interactive:focus {
   outline: none;
 }
+
+/* Label nama desa di PetaLokasiPicker (dari data batas desa resmi kita
+   sendiri, bukan basemap) -- dibikin ringkas, tanpa balon/panah bawaan
+   Leaflet, supaya tidak menutupi peta yang kecil. */
+.peta-desa-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 9px;
+  font-weight: 600;
+  color: #1e3a8a;
+  text-shadow:
+    0 1px 2px #fff,
+    0 -1px 2px #fff,
+    1px 0 2px #fff,
+    -1px 0 2px #fff;
+  white-space: nowrap;
+}
+
+.peta-desa-label::before {
+  display: none;
+}

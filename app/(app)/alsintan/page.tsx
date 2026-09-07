@@ -39,9 +39,10 @@ export default async function AlsintanPage({
     kondisi?: string;
     kecamatan?: string;
     tahun?: string;
+    q?: string;
   }>;
 }) {
-  const { page: pageParam, size: sizeParam, jenis, kategori, kondisi, kecamatan, tahun } = await searchParams;
+  const { page: pageParam, size: sizeParam, jenis, kategori, kondisi, kecamatan, tahun, q } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const pageSize = PAGE_SIZE_OPTIONS.includes(Number(sizeParam)) ? Number(sizeParam) : DEFAULT_PAGE_SIZE;
   const from = (page - 1) * pageSize;
@@ -62,6 +63,19 @@ export default async function AlsintanPage({
   if (kecamatan) listQuery = listQuery.eq("kecamatan", kecamatan);
   if (tahun) listQuery = listQuery.eq("tahun_pengadaan", Number(tahun));
   if (kategori) listQuery = listQuery.eq("master_jenis_alsintan.kategori", kategori);
+  if (q) {
+    // Karakter koma/kurung/kutip punya arti khusus di sintaks filter or()
+    // PostgREST -- dibuang saja dari kata kunci pencarian supaya query-nya
+    // selalu valid (istilah pencarian di sini -- ID unit, nama, desa,
+    // kecamatan -- memang tidak pernah memakai karakter itu).
+    const safeQ = q.trim().replace(/[,()"\\]/g, " ").trim();
+    if (safeQ) {
+      const pattern = `%${safeQ}%`;
+      listQuery = listQuery.or(
+        `id_unit.ilike.${pattern},penerima.ilike.${pattern},desa.ilike.${pattern},kecamatan.ilike.${pattern}`
+      );
+    }
+  }
   listQuery = listQuery.order("created_at", { ascending: false }).range(from, to);
 
   const [{ profile }, { data: rawList, count }, { data: jenisList }, { data: kecamatanList }, { data: tahunRows }] =
@@ -85,7 +99,7 @@ export default async function AlsintanPage({
     .sort((a, b) => b - a)
     .map((t) => ({ value: String(t), label: String(t) }));
 
-  const activeFilters = { jenis, kategori, kondisi, kecamatan, tahun };
+  const activeFilters = { jenis, kategori, kondisi, kecamatan, tahun, q };
   function buildPageHref(targetPage: number) {
     const params = new URLSearchParams();
     Object.entries(activeFilters).forEach(([key, value]) => {

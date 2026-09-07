@@ -85,6 +85,7 @@ export default async function DashboardPage() {
           icon={<Boxes size={16} />}
           title="Unit per Jenis"
           data={jenisList.map((j) => ({ name: j.nama_jenis, jumlah: j.jumlah }))}
+          maxItems={5}
         />
       </div>
 

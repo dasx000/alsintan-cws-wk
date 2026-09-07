@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Search } from "lucide-react";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
 
 interface Option {
@@ -13,7 +15,7 @@ const KATEGORI_OPTIONS = [
   { value: "pasca_panen", label: "Pascapanen" },
 ];
 
-const FILTER_KEYS = ["jenis", "kategori", "kondisi", "kecamatan", "tahun"];
+const FILTER_KEYS = ["jenis", "kategori", "kondisi", "kecamatan", "tahun", "q"];
 
 const selectClass =
   "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500";
@@ -29,6 +31,8 @@ export default function AlsintanFilter({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [searchText, setSearchText] = useState(searchParams.get("q") ?? "");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeCount = FILTER_KEYS.filter((k) => searchParams.get(k)).length;
 
@@ -40,15 +44,26 @@ export default function AlsintanFilter({
     router.push(`/alsintan?${params.toString()}`);
   }
 
+  // Debounce supaya tidak nge-query server tiap ketikan satu huruf --
+  // tunggu jeda 400ms setelah user berhenti mengetik baru update URL.
+  function handleSearchChange(value: string) {
+    setSearchText(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => updateParam("q", value.trim()), 400);
+  }
+
   function resetFilters() {
     const params = new URLSearchParams(searchParams.toString());
     FILTER_KEYS.forEach((k) => params.delete(k));
     params.set("page", "1");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setSearchText("");
     router.push(`/alsintan?${params.toString()}`);
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
+    <div className="mb-4">
+      <div className="flex flex-wrap items-center gap-3">
       <select
         value={searchParams.get("jenis") ?? ""}
         onChange={(e) => updateParam("jenis", e.target.value)}
@@ -123,6 +138,18 @@ export default function AlsintanFilter({
           Reset filter
         </button>
       )}
+      </div>
+
+      <div className="relative mt-3 max-w-sm">
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={searchText}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          placeholder="Cari ID unit, penerima, desa, atau kecamatan..."
+          className="w-full rounded-md border border-gray-300 py-2 pl-9 pr-3 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+        />
+      </div>
     </div>
   );
 }
