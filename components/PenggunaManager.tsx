@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, Search, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import PendingOverlay from "@/components/PendingOverlay";
 import PasswordInput from "@/components/PasswordInput";
@@ -69,6 +69,22 @@ function wilayahSummary(user: Pengguna, kecamatanList: Kecamatan[], desaList: De
   }
 
   return desaNama.length > 3 ? `${desaNama.slice(0, 3).join(", ")}, +${desaNama.length - 3} lagi` : desaNama.join(", ");
+}
+
+// Daftar kecamatan (bisa lebih dari satu) yang mencakup desa-desa yang
+// dipegang user -- terpisah dari wilayahSummary supaya tabel/ekspor punya
+// kolom kecamatan sendiri yang ringkas, tidak tercampur nama desa.
+function kecamatanSummary(user: Pengguna, kecamatanList: Kecamatan[], desaList: Desa[]): string {
+  if (user.role !== "penyuluh") return "-";
+  if (user.desaIds.length === 0) return "Belum diatur";
+
+  const idKecamatanSet = new Set(
+    user.desaIds.map((id) => desaList.find((d) => d.id_desa === id)?.id_kecamatan).filter(Boolean)
+  );
+  const namaKecamatan = kecamatanList
+    .filter((k) => idKecamatanSet.has(k.id_kecamatan))
+    .map((k) => k.nama_kecamatan);
+  return namaKecamatan.length > 0 ? namaKecamatan.join(", ") : "Belum diatur";
 }
 
 // Blok koordinator + pemilih desa (dipakai bareng oleh form Tambah & Edit).
@@ -437,6 +453,7 @@ export default function PenggunaManager({
   const [koordinatorFilter, setKoordinatorFilter] = useState("");
   const [kecFilterList, setKecFilterList] = useState("");
   const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
 
   function resetPage() {
     setPage(1);
@@ -473,9 +490,84 @@ export default function PenggunaManager({
     setPage(1);
   }
 
+  // Ekspor dijalankan di browser dari data yang sudah difilter (`filtered`),
+  // supaya isi file selalu persis sama dengan yang sedang ditampilkan --
+  // filter di sini murni client-side (bukan URL params) sehingga tidak ada
+  // route API terpisah untuk diselaraskan. exceljs di-import dinamis biar
+  // tidak membengkakkan bundle awal.
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "AlsinTrack";
+      workbook.created = new Date();
+
+      const sheet = workbook.addWorksheet("Data Pengguna", {
+        views: [{ state: "frozen", ySplit: 1 }],
+      });
+      sheet.columns = [
+        { header: "No.", key: "no", width: 6 },
+        { header: "Email", key: "email", width: 28 },
+        { header: "Nama", key: "nama", width: 24 },
+        { header: "NIP", key: "nip", width: 20 },
+        { header: "Role", key: "role", width: 18 },
+        { header: "Koordinator", key: "koordinator", width: 14 },
+        { header: "Kecamatan", key: "kecamatan", width: 20 },
+        { header: "Wilayah", key: "wilayah", width: 30 },
+      ];
+
+      const headerRow = sheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      headerRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF16A34A" } };
+      headerRow.alignment = { vertical: "middle" };
+
+      filtered.forEach((u, index) => {
+        const row = sheet.addRow({
+          no: index + 1,
+          email: u.email,
+          nama: u.nama ?? "-",
+          nip: u.nip ?? "-",
+          role: ROLE_LABEL[u.role] ?? u.role,
+          koordinator: u.koordinator ? "Ya" : "Tidak",
+          kecamatan: kecamatanSummary(u, kecamatanList, desaList),
+          wilayah: wilayahSummary(u, kecamatanList, desaList),
+        });
+        if (index % 2 === 1) {
+          row.eachCell({ includeEmpty: true }, (cell) => {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF3F4F6" } };
+          });
+        }
+      });
+
+      sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: sheet.columns.length } };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `pengguna-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        <button
+          onClick={handleExport}
+          disabled={exporting || filtered.length === 0}
+          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        >
+          <Download size={16} />
+          {exporting ? "Mengekspor..." : "Ekspor Excel"}
+        </button>
         {!showAddForm && (
           <button
             onClick={() => {
@@ -584,6 +676,7 @@ export default function PenggunaManager({
               <th className="px-4 py-3 text-left font-medium text-gray-600">NIP</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Koordinator</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Kecamatan</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Wilayah</th>
               <th className="px-4 py-3 text-right font-medium text-gray-600">Aksi</th>
             </tr>
@@ -608,6 +701,7 @@ export default function PenggunaManager({
                     <span className="text-gray-400">-</span>
                   )}
                 </td>
+                <td className="px-4 py-3 text-gray-700">{kecamatanSummary(u, kecamatanList, desaList)}</td>
                 <td className="px-4 py-3 text-gray-700">{wilayahSummary(u, kecamatanList, desaList)}</td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -627,7 +721,7 @@ export default function PenggunaManager({
             ))}
             {paged.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   {users.length === 0 ? "Belum ada pengguna lain." : "Tidak ada pengguna yang cocok dengan filter/pencarian."}
                 </td>
               </tr>
