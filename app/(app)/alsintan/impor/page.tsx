@@ -27,7 +27,9 @@ export default async function ImporAlsintanPage() {
             <p className="mb-3 text-xs text-gray-600">
               Template berisi kolom yang sesuai dan sheet Referensi (daftar Jenis Alsintan, Kondisi, Kecamatan, dan
               Sumber Dana yang valid). Kolom Jenis Alsintan, Kondisi, Sumber Dana, dan Kecamatan sudah dilengkapi
-              dropdown -- klik selnya lalu pilih dari daftar. Kolom bertanda * wajib diisi.
+              dropdown -- klik selnya lalu pilih dari daftar. Kolom bertanda * wajib diisi. Kolom Titik Koordinat
+              opsional -- boleh format apa saja (titik/koma desimal, dengan/tanpa huruf N/S/E/W), atau dikosongkan
+              saja (koordinat akan diacak otomatis di dalam desa yang diisi).
             </p>
             <a
               href="/api/alsintan/template"

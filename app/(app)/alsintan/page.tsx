@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Download, Eye, MapPin, Pencil, Plus, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Eye, MapPin, MapPinned, Pencil, Plus, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
@@ -22,6 +22,8 @@ interface AlsintanRow {
   penerima: string | null;
   desa: string | null;
   kecamatan: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 const KATEGORI_INFO: Record<string, { label: string; badge: string }> = {
@@ -58,7 +60,7 @@ export default async function AlsintanPage({
   // difilter (default embedded select adalah left join, nggak bisa dipakai
   // sebagai kondisi filter di PostgREST).
   let selectStr =
-    "id, id_unit, tahun_pengadaan, kondisi, penerima, desa, kecamatan, master_jenis_alsintan(nama_jenis, kategori)";
+    "id, id_unit, tahun_pengadaan, kondisi, penerima, desa, kecamatan, latitude, longitude, master_jenis_alsintan(nama_jenis, kategori)";
   if (kategori) selectStr = selectStr.replace("master_jenis_alsintan(", "master_jenis_alsintan!inner(");
 
   let listQuery = supabase.from("alsintan").select(selectStr, { count: "exact" });
@@ -208,6 +210,7 @@ export default async function AlsintanPage({
               <th className="px-4 py-3 text-left font-medium text-gray-600">Tahun</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Penerima</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Kondisi</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Koordinat</th>
               <th className="px-4 py-3 text-right font-medium text-gray-600">Aksi</th>
             </tr>
           </thead>
@@ -265,6 +268,22 @@ export default async function AlsintanPage({
                       {kondisiLabel(a.kondisi)}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {a.latitude != null && a.longitude != null ? (
+                      <a
+                        href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Buka di Google Maps"
+                        className="inline-flex items-center gap-1 text-green-700 hover:underline"
+                      >
+                        <MapPinned size={12} className="text-green-600" />
+                        {a.latitude.toFixed(5)}, {a.longitude.toFixed(5)}
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <Link
@@ -293,7 +312,7 @@ export default async function AlsintanPage({
             })}
             {alsintanList.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                   Belum ada data alsintan.
                 </td>
               </tr>

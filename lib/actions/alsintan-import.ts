@@ -8,6 +8,8 @@ import { friendlyDbError } from "@/lib/friendly-db-error";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
 import { generateIdUnitBatch } from "@/lib/generate-id-unit";
 import { buildAlsintanImportErrorReport } from "@/lib/alsintan-import-template";
+import { parseCoordinateInput } from "@/lib/parse-coordinate";
+import { getRandomPointForDesa } from "@/lib/desa-geo-server";
 
 export interface ImportRowError {
   row: number;
@@ -122,6 +124,8 @@ export async function importAlsintanExcel(
     catatan: string | null;
     jumlahUnit: number;
     luasLahanHa: number | null;
+    latitude: number | null;
+    longitude: number | null;
   }
 
   const parsedRows: ParsedRow[] = [];
@@ -147,6 +151,7 @@ export async function importAlsintanExcel(
     const catatanText = cellText(row, colIndex, "Catatan");
     const jumlahUnitText = cellText(row, colIndex, "Jumlah Unit");
     const luasLahanText = cellText(row, colIndex, "Luas Lahan (Ha)");
+    const koordinatText = cellText(row, colIndex, "Titik Koordinat (lat, lng)");
 
     rawRowValues.set(r, [
       jenisText,
@@ -161,6 +166,7 @@ export async function importAlsintanExcel(
       jumlahUnitText,
       luasLahanText,
       catatanText,
+      koordinatText,
     ]);
 
     const jenis = jenisMap.get(normalize(jenisText));
@@ -225,6 +231,27 @@ export async function importAlsintanExcel(
       luasLahanHa = n;
     }
 
+    // Koordinat opsional -- format bebas (sama parser dengan form input
+    // manual, lihat parseCoordinateInput). Kalau diisi tapi formatnya tidak
+    // kebaca, atau kalau dikosongkan dan desanya tidak ketemu di data batas
+    // desa, koordinat dikosongkan saja -- TIDAK menggagalkan baris (koordinat
+    // bukan data wajib).
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    if (koordinatText) {
+      const parsed = parseCoordinateInput(koordinatText);
+      if (parsed) {
+        latitude = parsed.lat;
+        longitude = parsed.lng;
+      }
+    } else {
+      const point = await getRandomPointForDesa(desaText, kecamatan.nama_kecamatan);
+      if (point) {
+        latitude = point.lat;
+        longitude = point.lng;
+      }
+    }
+
     parsedRows.push({
       idJenis: jenis.id,
       kodeKategori: jenis.kategori === "pasca_panen" ? "PS" : "PP",
@@ -240,6 +267,8 @@ export async function importAlsintanExcel(
       catatan: catatanText || null,
       jumlahUnit,
       luasLahanHa,
+      latitude,
+      longitude,
     });
   }
 
@@ -310,6 +339,8 @@ export async function importAlsintanExcel(
         penerima: row.penerima,
         catatan: row.catatan,
         luas_lahan_ha: row.luasLahanHa,
+        latitude: row.latitude,
+        longitude: row.longitude,
         id_unit: ids.shift(),
         dibuat_oleh: user?.id,
       });

@@ -20,6 +20,7 @@ const DATA_HEADERS = [
   "Jumlah Unit",
   "Luas Lahan (Ha)",
   "Catatan",
+  "Titik Koordinat (lat, lng)",
 ];
 
 const ERROR_COLUMN_HEADER = "Keterangan Error";
