@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { deleteAlsintan } from "@/lib/actions/alsintan";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
+import PendingOverlay from "@/components/PendingOverlay";
 
 export default function DeleteAlsintanButton({
   id,
@@ -58,6 +59,7 @@ export default function DeleteAlsintanButton({
           <Trash2 size={15} />
         </button>
         {dialog}
+        <PendingOverlay show={isPending} label="Menghapus..." />
       </>
     );
   }
@@ -74,6 +76,7 @@ export default function DeleteAlsintanButton({
       </button>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       {dialog}
+      <PendingOverlay show={isPending} label="Menghapus..." />
     </div>
   );
 }

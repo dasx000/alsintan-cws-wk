@@ -6,7 +6,6 @@ import { getCurrentProfile } from "@/lib/get-current-profile";
 import { KONDISI_BADGE_STYLES, kondisiLabel } from "@/lib/kondisi-alsintan";
 import { canManageAlsintanRow } from "@/lib/alsintan-permissions";
 import DeleteAlsintanButton from "@/components/DeleteAlsintanButton";
-import RiwayatMonev from "@/components/riwayat/RiwayatMonev";
 
 interface AlsintanDetail {
   id: string;
@@ -40,7 +39,7 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ profile }, { data: raw }, { data: monevRaw }] = await Promise.all([
+  const [{ profile }, { data: raw }] = await Promise.all([
     getCurrentProfile(),
     supabase
       .from("alsintan")
@@ -52,11 +51,6 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
       )
       .eq("id", id)
       .single(),
-    supabase
-      .from("monev")
-      .select("id, tanggal_kunjungan, kondisi_terverifikasi, catatan, foto_url, petugas")
-      .eq("id_alsintan", id)
-      .order("tanggal_kunjungan", { ascending: false }),
   ]);
 
   if (!raw) notFound();
@@ -144,10 +138,6 @@ export default async function AlsintanDetailPage({ params }: { params: Promise<{
           <DeleteAlsintanButton id={id} idUnit={alsintan.id_unit} />
         </div>
       )}
-
-      <div className="space-y-6">
-        <RiwayatMonev idAlsintan={id} entries={monevRaw ?? []} canWrite={canManage} canDelete={canManage} />
-      </div>
     </div>
   );
 }

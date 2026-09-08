@@ -26,7 +26,8 @@ export default async function ImporAlsintanPage() {
             <p className="text-sm font-medium text-gray-800">1. Unduh template terlebih dahulu</p>
             <p className="mb-3 text-xs text-gray-600">
               Template berisi kolom yang sesuai dan sheet Referensi (daftar Jenis Alsintan, Kondisi, Kecamatan, dan
-              Sumber Dana yang valid). Isi datanya persis seperti nama di sheet Referensi.
+              Sumber Dana yang valid). Kolom Jenis Alsintan, Kondisi, Sumber Dana, dan Kecamatan sudah dilengkapi
+              dropdown -- klik selnya lalu pilih dari daftar. Kolom bertanda * wajib diisi.
             </p>
             <a
               href="/api/alsintan/template"
@@ -40,6 +41,10 @@ export default async function ImporAlsintanPage() {
 
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <p className="mb-3 text-sm font-medium text-gray-800">2. Isi dan unggah file</p>
+        <p className="mb-3 text-xs text-gray-500">
+          Baris yang valid tetap diimpor meski ada baris lain yang error. Baris yang error TIDAK ikut diimpor --
+          filenya otomatis terunduh (kolom terakhir menandai errornya), perbaiki lalu unggah ulang khusus baris itu.
+        </p>
         <ImportAlsintanForm />
       </div>
     </div>

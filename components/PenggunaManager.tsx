@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
+import PendingOverlay from "@/components/PendingOverlay";
 import PasswordInput from "@/components/PasswordInput";
 import {
   createPengguna,
@@ -410,6 +411,7 @@ function DeleteButton({ id, email }: { id: string; email: string }) {
       </button>
       {error && <p className="text-xs text-red-600">{error}</p>}
       {dialog}
+      <PendingOverlay show={isPending} label="Menghapus..." />
     </>
   );
 }

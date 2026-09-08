@@ -1,6 +1,6 @@
 import type { CurrentProfile } from "@/lib/get-current-profile";
 
-// Aturan akses tulis alsintan/monev (cermin dari fungsi can_manage_wilayah()
+// Aturan akses tulis alsintan (cermin dari fungsi can_manage_wilayah()
 // di supabase/migrations/0024_penyuluh_multidesa_koordinator.sql):
 //  - admin              : semua baris.
 //  - penyuluh koordinator: baris yang kecamatan-nya termasuk salah satu

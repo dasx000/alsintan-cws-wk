@@ -91,7 +91,12 @@ export default async function AlsintanPage({
       );
     }
   }
-  listQuery = listQuery.order("created_at", { ascending: false }).range(from, to);
+  listQuery = listQuery
+    .order("kecamatan", { ascending: true, nullsFirst: false })
+    .order("desa", { ascending: true, nullsFirst: false })
+    .order("penerima", { ascending: true, nullsFirst: false })
+    .order("nama_jenis", { ascending: true, referencedTable: "master_jenis_alsintan" })
+    .range(from, to);
 
   const [{ data: rawList, count }, { data: jenisList }, { data: kecamatanList }, { data: desaList }, { data: tahunRows }] =
     await Promise.all([
@@ -129,7 +134,7 @@ export default async function AlsintanPage({
       if (scope.lockedKecamatan) return !!d.master_kecamatan && scope.lockedKecamatan.includes(d.master_kecamatan.nama_kecamatan);
       return true;
     })
-    .map((d) => ({ value: d.nama_desa, label: d.nama_desa }));
+    .map((d) => ({ value: d.nama_desa, label: d.nama_desa, kecamatan: d.master_kecamatan?.nama_kecamatan ?? "" }));
 
   const activeFilters = { jenis, kategori, kondisi, kecamatan, desa, tahun, q };
   function buildPageHref(targetPage: number) {
@@ -195,7 +200,7 @@ export default async function AlsintanPage({
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">ID Unit</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">No.</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Jenis</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Kategori</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Kecamatan</th>
@@ -207,15 +212,15 @@ export default async function AlsintanPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {alsintanList.map((a) => {
+            {alsintanList.map((a, index) => {
               const kategoriInfo = KATEGORI_INFO[a.master_jenis_alsintan?.kategori ?? ""];
               const ringColor = KATEGORI_RING_COLORS[a.master_jenis_alsintan?.kategori ?? ""] ?? "#9ca3af";
               const canManageRow = canManageAlsintanRow(profile, { kecamatan: a.kecamatan, desa: a.desa });
               return (
                 <tr key={a.id} className="group hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-900">
+                  <td className="px-4 py-3 text-gray-500">
                     <Link href={`/alsintan/${a.id}`} className="hover:underline">
-                      {a.id_unit}
+                      {rangeStart + index}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-gray-700">

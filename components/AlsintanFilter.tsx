@@ -10,6 +10,10 @@ interface Option {
   label: string;
 }
 
+interface DesaOption extends Option {
+  kecamatan: string;
+}
+
 const KATEGORI_OPTIONS = [
   { value: "pra_panen", label: "Prapanen" },
   { value: "pasca_panen", label: "Pascapanen" },
@@ -28,7 +32,7 @@ export default function AlsintanFilter({
 }: {
   jenisOptions: Option[];
   kecamatanOptions: Option[];
-  desaOptions: Option[];
+  desaOptions: DesaOption[];
   tahunOptions: Option[];
 }) {
   const router = useRouter();
@@ -37,11 +41,26 @@ export default function AlsintanFilter({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeCount = FILTER_KEYS.filter((k) => searchParams.get(k)).length;
+  const selectedKecamatan = searchParams.get("kecamatan") ?? "";
+  const filteredDesaOptions = selectedKecamatan
+    ? desaOptions.filter((d) => d.kecamatan === selectedKecamatan)
+    : [];
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    params.set("page", "1");
+    router.push(`/alsintan?${params.toString()}`);
+  }
+
+  // Ganti kecamatan -> desa yang sudah dipilih (kalau ada) mungkin sudah
+  // tidak relevan lagi, jadi ikut direset.
+  function handleKecamatanChange(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("kecamatan", value);
+    else params.delete("kecamatan");
+    params.delete("desa");
     params.set("page", "1");
     router.push(`/alsintan?${params.toString()}`);
   }
@@ -106,8 +125,8 @@ export default function AlsintanFilter({
       </select>
 
       <select
-        value={searchParams.get("kecamatan") ?? ""}
-        onChange={(e) => updateParam("kecamatan", e.target.value)}
+        value={selectedKecamatan}
+        onChange={(e) => handleKecamatanChange(e.target.value)}
         className={selectClass}
       >
         <option value="">Semua Kecamatan</option>
@@ -121,10 +140,12 @@ export default function AlsintanFilter({
       <select
         value={searchParams.get("desa") ?? ""}
         onChange={(e) => updateParam("desa", e.target.value)}
-        className={selectClass}
+        disabled={!selectedKecamatan}
+        title={!selectedKecamatan ? "Pilih kecamatan dulu" : undefined}
+        className={`${selectClass} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
       >
-        <option value="">Semua Desa</option>
-        {desaOptions.map((o) => (
+        <option value="">{selectedKecamatan ? "Semua Desa" : "Pilih kecamatan dulu"}</option>
+        {filteredDesaOptions.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

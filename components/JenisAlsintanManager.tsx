@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/jenis-alsintan";
 import { KATEGORI_OPTIONS } from "@/lib/jenis-alsintan-kategori";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
+import PendingOverlay from "@/components/PendingOverlay";
 
 const PAGE_SIZE = 10;
 
@@ -254,6 +255,7 @@ export default function JenisAlsintanManager({
         </div>
       )}
       {dialog}
+      <PendingOverlay show={isDeleting} label="Menghapus..." />
     </div>
   );
 }

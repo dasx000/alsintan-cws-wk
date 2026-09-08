@@ -1,9 +1,5 @@
-import { Loader2 } from "lucide-react";
+import PendingOverlay from "@/components/PendingOverlay";
 
 export default function Loading() {
-  return (
-    <div className="flex h-64 items-center justify-center">
-      <Loader2 className="animate-spin text-gray-400" size={28} />
-    </div>
-  );
+  return <PendingOverlay show label="Memuat halaman..." />;
 }

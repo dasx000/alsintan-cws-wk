@@ -7,6 +7,7 @@ import { getKecamatanDesaForProfile } from "@/lib/wilayah";
 import { friendlyDbError } from "@/lib/friendly-db-error";
 import { KONDISI_OPTIONS } from "@/lib/kondisi-alsintan";
 import { generateIdUnitBatch } from "@/lib/generate-id-unit";
+import { buildAlsintanImportErrorReport } from "@/lib/alsintan-import-template";
 
 export interface ImportRowError {
   row: number;
@@ -18,6 +19,8 @@ export interface ImportActionState {
   success?: boolean;
   insertedCount?: number;
   rowErrors?: ImportRowError[];
+  /** File .xlsx (base64) berisi hanya baris yang error, untuk diunduh & diperbaiki user. */
+  errorFileBase64?: string;
 }
 
 const MAX_ROWS = 1000;
@@ -44,12 +47,12 @@ function cellText(row: ExcelJS.Row, colIndex: Record<string, number>, col: strin
   return String(value).trim();
 }
 
-const REQUIRED_COLUMNS = ["Jenis Alsintan", "Kondisi", "Tahun Pengadaan", "Kecamatan", "Kelompok Penerima"];
+const REQUIRED_COLUMNS = ["Jenis Alsintan", "Kondisi", "Tahun Pengadaan", "Kecamatan", "Desa"];
 
 // Impor massal lewat Excel -- pakai template dari /api/alsintan/template.
-// Validasi dilakukan atomik: kalau ADA baris bermasalah, tidak ada satupun
-// yang disimpan (biar user tidak bingung menyortir data yang sudah
-// setengah masuk vs yang belum lewat re-upload).
+// Baris yang valid tetap disimpan meski ada baris lain yang error --
+// baris yang error dikembalikan (tidak disimpan) lewat file error-only
+// supaya user cukup perbaiki & unggah ulang baris yang bermasalah saja.
 export async function importAlsintanExcel(
   _prevState: ImportActionState,
   formData: FormData
@@ -88,7 +91,9 @@ export async function importAlsintanExcel(
 
   const colIndex: Record<string, number> = {};
   sheet.getRow(1).eachCell((cell, colNumber) => {
-    const text = String(cell.value ?? "").trim();
+    // Header template menandai kolom wajib dengan sufiks " *" (mis. "Kecamatan *") --
+    // buang tanda itu supaya tetap cocok dengan nama kolom di REQUIRED_COLUMNS.
+    const text = String(cell.value ?? "").trim().replace(/\s*\*$/, "");
     if (text) colIndex[text] = colNumber;
   });
 
@@ -112,8 +117,8 @@ export async function importAlsintanExcel(
     tanggalBast: string | null;
     idKecamatan: string;
     namaKecamatan: string;
-    desa: string | null;
-    penerima: string;
+    desa: string;
+    penerima: string | null;
     catatan: string | null;
     jumlahUnit: number;
     luasLahanHa: number | null;
@@ -121,6 +126,9 @@ export async function importAlsintanExcel(
 
   const parsedRows: ParsedRow[] = [];
   const rowErrors: ImportRowError[] = [];
+  // Nilai mentah tiap baris (urutan kolom = DATA_HEADERS di template), dipakai
+  // untuk membangun ulang file error-only kalau ada baris yang gagal validasi.
+  const rawRowValues = new Map<number, string[]>();
 
   for (let r = 2; r <= lastRow; r++) {
     const row = sheet.getRow(r);
@@ -139,6 +147,21 @@ export async function importAlsintanExcel(
     const catatanText = cellText(row, colIndex, "Catatan");
     const jumlahUnitText = cellText(row, colIndex, "Jumlah Unit");
     const luasLahanText = cellText(row, colIndex, "Luas Lahan (Ha)");
+
+    rawRowValues.set(r, [
+      jenisText,
+      kondisiText,
+      tahunText,
+      sumberDanaText,
+      noBastText,
+      tanggalBastText,
+      kecamatanText,
+      desaText,
+      penerimaText,
+      jumlahUnitText,
+      luasLahanText,
+      catatanText,
+    ]);
 
     const jenis = jenisMap.get(normalize(jenisText));
     if (!jenis) {
@@ -167,8 +190,8 @@ export async function importAlsintanExcel(
       continue;
     }
 
-    if (!penerimaText) {
-      rowErrors.push({ row: r, message: "Kelompok Penerima wajib diisi." });
+    if (!desaText) {
+      rowErrors.push({ row: r, message: "Desa wajib diisi." });
       continue;
     }
 
@@ -212,8 +235,8 @@ export async function importAlsintanExcel(
       tanggalBast: tanggalBastText || null,
       idKecamatan: kecamatan.id_kecamatan,
       namaKecamatan: kecamatan.nama_kecamatan,
-      desa: desaText || null,
-      penerima: penerimaText,
+      desa: desaText,
+      penerima: penerimaText || null,
       catatan: catatanText || null,
       jumlahUnit,
       luasLahanHa,
@@ -224,10 +247,19 @@ export async function importAlsintanExcel(
     return { error: "Tidak ada baris data yang terbaca. Pastikan data diisi mulai baris ke-2." };
   }
 
-  if (rowErrors.length > 0) {
+  async function buildErrorState(): Promise<Pick<ImportActionState, "rowErrors" | "errorFileBase64">> {
+    const errorReportBuffer = await buildAlsintanImportErrorReport(
+      rowErrors.map((e) => ({ values: rawRowValues.get(e.row) ?? [], message: e.message })),
+      { jenisList: jenisList ?? [], kecamatanList, sumberDanaList: sumberDanaList ?? [] }
+    );
+    return { rowErrors, errorFileBase64: errorReportBuffer.toString("base64") };
+  }
+
+  // Semua baris error, tidak ada satupun yang valid untuk disimpan.
+  if (parsedRows.length === 0) {
     return {
-      error: `Ditemukan ${rowErrors.length} baris bermasalah. Perbaiki lalu unggah ulang.`,
-      rowErrors,
+      error: `Semua ${rowErrors.length} baris gagal divalidasi, tidak ada yang diimpor. File berisi baris yang error otomatis terunduh -- perbaiki lalu unggah ulang.`,
+      ...(await buildErrorState()),
     };
   }
 
@@ -290,13 +322,26 @@ export async function importAlsintanExcel(
     const chunk = insertRows.slice(i, i + CHUNK);
     const { error } = await supabase.from("alsintan").insert(chunk);
     if (error) {
+      revalidatePath("/alsintan");
       return {
         error: `${friendlyDbError(error, "Gagal menyimpan data")} (${insertedCount} baris sudah tersimpan sebelum error ini, sisanya batal.)`,
+        success: insertedCount > 0,
+        insertedCount,
       };
     }
     insertedCount += chunk.length;
   }
 
   revalidatePath("/alsintan");
+
+  if (rowErrors.length > 0) {
+    return {
+      error: `${insertedCount} baris valid berhasil diimpor. ${rowErrors.length} baris gagal divalidasi dan TIDAK diimpor -- unduh file berikut, perbaiki, lalu unggah ulang khusus baris yang error.`,
+      success: true,
+      insertedCount,
+      ...(await buildErrorState()),
+    };
+  }
+
   return { error: null, success: true, insertedCount };
 }

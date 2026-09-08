@@ -39,7 +39,7 @@ const KATEGORI_FONT_COLOR: Record<string, string> = {
 };
 
 const COLUMNS = [
-  { header: "ID Unit", key: "id_unit", width: 20 },
+  { header: "No.", key: "no", width: 8 },
   { header: "Jenis", key: "jenis", width: 22 },
   { header: "Kategori", key: "kategori", width: 14 },
   { header: "Kondisi", key: "kondisi", width: 14 },
@@ -100,7 +100,11 @@ export async function GET(request: NextRequest) {
       );
     }
   }
-  query = query.order("created_at", { ascending: false });
+  query = query
+    .order("kecamatan", { ascending: true, nullsFirst: false })
+    .order("desa", { ascending: true, nullsFirst: false })
+    .order("penerima", { ascending: true, nullsFirst: false })
+    .order("nama_jenis", { ascending: true, referencedTable: "master_jenis_alsintan" });
 
   const { data, error } = await query;
 
@@ -124,10 +128,10 @@ export async function GET(request: NextRequest) {
   headerRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF16A34A" } };
   headerRow.alignment = { vertical: "middle" };
 
-  rows.forEach((r) => {
+  rows.forEach((r, index) => {
     const kategori = r.master_jenis_alsintan?.kategori ?? null;
     const row = sheet.addRow({
-      id_unit: r.id_unit,
+      no: index + 1,
       jenis: r.master_jenis_alsintan?.nama_jenis ?? "-",
       kategori: kategori ? (KATEGORI_LABEL[kategori] ?? kategori) : "-",
       kondisi: kondisiLabel(r.kondisi),
@@ -142,6 +146,16 @@ export async function GET(request: NextRequest) {
       catatan: r.catatan ?? "",
     });
 
+    // Zebra stripe -- baris genap dikasih fill abu-abu muda supaya lebih
+    // gampang dibaca menyamping di tabel yang panjang. Diterapkan DULU
+    // sebelum fill kondisi/kategori di bawah, supaya warna kondisi tetap
+    // menang di sel itu (bukan ketiban abu-abu).
+    if (index % 2 === 1) {
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF3F4F6" } };
+      });
+    }
+
     const kondisiFill = KONDISI_FILL[r.kondisi];
     if (kondisiFill) {
       row.getCell("kondisi").fill = { type: "pattern", pattern: "solid", fgColor: { argb: kondisiFill } };
@@ -153,7 +167,6 @@ export async function GET(request: NextRequest) {
   });
 
   sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: COLUMNS.length } };
-  sheet.getColumn("id_unit").font = { name: "Consolas" };
 
   const buffer = await workbook.xlsx.writeBuffer();
 
