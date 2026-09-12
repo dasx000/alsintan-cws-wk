@@ -36,7 +36,7 @@ export default function AppShell({
   koordinator: boolean;
 }) {
   const pathname = usePathname();
-  const canManagePengguna = role === "admin" || (role === "penyuluh" && koordinator);
+  const canManagePengguna = role === "admin" || (role === "penyuluh_bpp" && koordinator);
   const navItems = canManagePengguna
     ? [...BASE_NAV_ITEMS, { href: "/pengguna", label: "Pengguna", icon: UserCog }, PETA_SEBARAN_ITEM, PROFIL_ITEM]
     : [...BASE_NAV_ITEMS, PETA_SEBARAN_ITEM, PROFIL_ITEM];

@@ -11,14 +11,14 @@ const inputClass =
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin (kabupaten)",
-  penyuluh: "Penyuluh",
+  penyuluh_bpp: "Penyuluh BPP",
 };
 
 // Ringkasan wilayah untuk ditampilkan (read-only) -- bukan bagian yang bisa
 // diedit di halaman ini, cuma konteks. Pengaturan wilayah tetap lewat menu
 // Pengguna (admin/koordinator).
 function wilayahSummary(profile: CurrentProfile): string {
-  if (profile.role !== "penyuluh") return "-";
+  if (profile.role !== "penyuluh_bpp") return "-";
   if (profile.koordinator) {
     return profile.kecamatanWilayah.length > 0
       ? `Koordinator -- ${profile.kecamatanWilayah.join(", ")}`

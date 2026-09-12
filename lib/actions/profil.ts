@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminCoreClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { friendlyDbError } from "@/lib/friendly-db-error";
 
@@ -26,16 +26,17 @@ export async function updateProfilSendiri(
 
   if (password && password.length < 6) return { error: "Password baru minimal 6 karakter." };
 
-  // profiles_update RLS cuma izinkan admin -- pakai admin client di sini,
-  // amannya cukup karena id yang di-update SELALU dari sesi sendiri
+  // nama/nip sekarang di core.profiles (identitas lintas-app, project
+  // Supabase shared "FULLSTACK") -- pakai admin client (core schema) di
+  // sini, amannya cukup karena id yang di-update SELALU dari sesi sendiri
   // (userId), bukan dari input form.
-  const adminClient = createAdminClient();
+  const adminCoreClient = createAdminCoreClient();
 
-  const { error: profileError } = await adminClient.from("profiles").update({ nama, nip }).eq("id", userId);
+  const { error: profileError } = await adminCoreClient.from("profiles").update({ nama, nip }).eq("id", userId);
   if (profileError) return { error: friendlyDbError(profileError, "Gagal menyimpan perubahan profil.") };
 
   if (password) {
-    const { error: passwordError } = await adminClient.auth.admin.updateUserById(userId, { password });
+    const { error: passwordError } = await adminCoreClient.auth.admin.updateUserById(userId, { password });
     if (passwordError) return { error: `Profil disimpan, tapi gagal mengganti password: ${passwordError.message}` };
   }
 

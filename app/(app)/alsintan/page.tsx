@@ -55,6 +55,8 @@ export default async function AlsintanPage({
   const supabase = await createClient();
   const { profile } = await getCurrentProfile();
   const scope = getAlsintanFilterScope(profile);
+  console.log("[AlsintanPage] profile:", profile);
+  console.log("[AlsintanPage] scope (lockedKecamatan/lockedDesa):", scope);
 
   // Filter kategori butuh inner join ke master_jenis_alsintan supaya bisa
   // difilter (default embedded select adalah left join, nggak bisa dipakai
@@ -100,7 +102,7 @@ export default async function AlsintanPage({
     .order("nama_jenis", { ascending: true, referencedTable: "master_jenis_alsintan" })
     .range(from, to);
 
-  const [{ data: rawList, count }, { data: jenisList }, { data: kecamatanList }, { data: desaList }, { data: tahunRows }] =
+  const [{ data: rawList, count, error: listError }, { data: jenisList }, { data: kecamatanList }, { data: desaList }, { data: tahunRows }] =
     await Promise.all([
       listQuery,
       supabase.from("master_jenis_alsintan").select("id, nama_jenis").order("nama_jenis"),
@@ -108,6 +110,7 @@ export default async function AlsintanPage({
       supabase.from("master_desa").select("id_desa, nama_desa, master_kecamatan(nama_kecamatan)").order("nama_desa"),
       supabase.from("alsintan").select("tahun_pengadaan"),
     ]);
+  console.log("[AlsintanPage] listQuery result -- count:", count, "rows:", rawList?.length, "error:", listError?.message ?? null);
 
   const canCreate = canCreateAlsintan(profile);
 
@@ -313,7 +316,9 @@ export default async function AlsintanPage({
             {alsintanList.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
-                  Belum ada data alsintan.
+                  {profile?.role === "penyuluh_bpp" && profile.desaWilayah.length === 0
+                    ? "Anda belum memiliki desa binaan. Hubungi admin untuk menetapkan wilayah Anda."
+                    : "Belum ada data alsintan."}
                 </td>
               </tr>
             )}

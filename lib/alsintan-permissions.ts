@@ -16,7 +16,7 @@ import type { CurrentProfile } from "@/lib/get-current-profile";
 export function canCreateAlsintan(profile: CurrentProfile | null): boolean {
   if (!profile) return false;
   if (profile.role === "admin") return true;
-  if (profile.role === "penyuluh") return profile.desaWilayah.length > 0;
+  if (profile.role === "penyuluh_bpp") return profile.desaWilayah.length > 0;
   return false;
 }
 
@@ -26,7 +26,7 @@ export function canManageAlsintanRow(
 ): boolean {
   if (!profile) return false;
   if (profile.role === "admin") return true;
-  if (profile.role === "penyuluh") {
+  if (profile.role === "penyuluh_bpp") {
     if (profile.koordinator) {
       return !!row.kecamatan && profile.kecamatanWilayah.includes(row.kecamatan);
     }
@@ -47,7 +47,7 @@ export interface AlsintanFilterScope {
 // biasa dikunci ke desa yang dia pegang. Dipakai di app/(app)/alsintan/page.tsx
 // untuk membatasi query DAN opsi dropdown filter -- bukan cuma nilai default.
 export function getAlsintanFilterScope(profile: CurrentProfile | null): AlsintanFilterScope {
-  if (!profile || profile.role !== "penyuluh") return { lockedKecamatan: null, lockedDesa: null };
+  if (!profile || profile.role !== "penyuluh_bpp") return { lockedKecamatan: null, lockedDesa: null };
   if (profile.koordinator) {
     return { lockedKecamatan: profile.kecamatanWilayah, lockedDesa: null };
   }

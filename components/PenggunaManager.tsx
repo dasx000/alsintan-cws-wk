@@ -35,7 +35,7 @@ interface Pengguna {
 
 const ROLE_OPTIONS = [
   { value: "admin", label: "Admin (kabupaten)" },
-  { value: "penyuluh", label: "Penyuluh" },
+  { value: "penyuluh_bpp", label: "Penyuluh BPP" },
 ];
 
 const ROLE_LABEL: Record<string, string> = Object.fromEntries(ROLE_OPTIONS.map((r) => [r.value, r.label]));
@@ -51,7 +51,7 @@ const inputClass =
 // Ringkasan wilayah 1 baris untuk tabel: nama desa yang dipegang (dibatasi
 // biar tidak kepanjangan), atau label koordinator + kecamatan turunannya.
 function wilayahSummary(user: Pengguna, kecamatanList: Kecamatan[], desaList: Desa[]): string {
-  if (user.role !== "penyuluh") return "-";
+  if (user.role !== "penyuluh_bpp") return "-";
   const desaNama = user.desaIds
     .map((id) => desaList.find((d) => d.id_desa === id)?.nama_desa)
     .filter((n): n is string => !!n);
@@ -75,7 +75,7 @@ function wilayahSummary(user: Pengguna, kecamatanList: Kecamatan[], desaList: De
 // dipegang user -- terpisah dari wilayahSummary supaya tabel/ekspor punya
 // kolom kecamatan sendiri yang ringkas, tidak tercampur nama desa.
 function kecamatanSummary(user: Pengguna, kecamatanList: Kecamatan[], desaList: Desa[]): string {
-  if (user.role !== "penyuluh") return "-";
+  if (user.role !== "penyuluh_bpp") return "-";
   if (user.desaIds.length === 0) return "Belum diatur";
 
   const idKecamatanSet = new Set(
@@ -194,8 +194,8 @@ function AddForm({
   const [state, formAction, isPending] = useActionState<PenggunaActionState, FormData>(createPengguna, {
     error: null,
   });
-  const roleOptions = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value === "penyuluh");
-  const [role, setRole] = useState("penyuluh");
+  const roleOptions = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value === "penyuluh_bpp");
+  const [role, setRole] = useState("penyuluh_bpp");
   const [koordinator, setKoordinator] = useState(false);
   const [selectedDesa, setSelectedDesa] = useState<Set<string>>(new Set());
   const [kecFilter, setKecFilter] = useState("");
@@ -253,7 +253,7 @@ function AddForm({
         </div>
       </div>
 
-      {role === "penyuluh" && (
+      {role === "penyuluh_bpp" && (
         <WilayahFields
           koordinator={koordinator}
           onKoordinatorChange={setKoordinator}
@@ -305,7 +305,7 @@ function EditForm({
   const [state, formAction, isPending] = useActionState<PenggunaActionState, FormData>(boundUpdate, {
     error: null,
   });
-  const roleOptions = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value === "penyuluh");
+  const roleOptions = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value === "penyuluh_bpp");
   const [role, setRole] = useState(user.role);
   const [koordinator, setKoordinator] = useState(user.koordinator);
   const [selectedDesa, setSelectedDesa] = useState<Set<string>>(new Set(user.desaIds));
@@ -360,7 +360,7 @@ function EditForm({
         </div>
       </div>
 
-      {role === "penyuluh" && (
+      {role === "penyuluh_bpp" && (
         <WilayahFields
           koordinator={koordinator}
           onKoordinatorChange={setKoordinator}
@@ -443,7 +443,7 @@ export default function PenggunaManager({
   desaList: Desa[];
   isAdmin: boolean;
 }) {
-  const roleOptions = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value === "penyuluh");
+  const roleOptions = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value === "penyuluh_bpp");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const editingUser = users.find((u) => u.id === editingId) ?? null;
@@ -689,7 +689,7 @@ export default function PenggunaManager({
                 <td className="px-4 py-3 font-mono text-xs text-gray-700">{u.nip ?? "-"}</td>
                 <td className="px-4 py-3 text-gray-700">{ROLE_LABEL[u.role] ?? u.role}</td>
                 <td className="px-4 py-3">
-                  {u.role === "penyuluh" ? (
+                  {u.role === "penyuluh_bpp" ? (
                     <span
                       className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
                         u.koordinator ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"

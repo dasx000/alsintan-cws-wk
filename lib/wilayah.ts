@@ -25,7 +25,7 @@ export async function getKecamatanDesaForProfile() {
   let kecamatanList = allKecamatan ?? [];
   let desaList = allDesa ?? [];
 
-  if (profile?.role === "penyuluh") {
+  if (profile?.role === "penyuluh_bpp") {
     if (profile.koordinator) {
       const idKecamatanSet = new Set(profile.desaWilayah.map((d) => d.id_kecamatan));
       kecamatanList = kecamatanList.filter((k) => idKecamatanSet.has(k.id_kecamatan));

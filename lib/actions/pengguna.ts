@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createAdminCoreClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/get-current-profile";
 import { friendlyDbError } from "@/lib/friendly-db-error";
 
@@ -14,7 +14,11 @@ export interface PenggunaActionState {
   success?: boolean;
 }
 
-const VALID_ROLES = ["admin", "penyuluh"];
+// Nilai role dibatasi CHECK constraint core.memberships_role_check ke
+// 'admin' | 'operator' | 'viewer' | 'penyuluh_bpp' ('operator'/'viewer'
+// nilai umum lintas-app, tidak dipakai app ini). "penyuluh_bpp" setara
+// "penyuluh" di UI/istilah bisnis app ini.
+const VALID_ROLES = ["admin", "penyuluh_bpp"];
 
 interface ManagerAuth {
   isAdmin: boolean;
@@ -31,7 +35,7 @@ interface ManagerAuth {
 async function getManagerAuth(): Promise<{ auth: ManagerAuth | null; error: string | null }> {
   const { profile } = await getCurrentProfile();
   if (profile?.role === "admin") return { auth: { isAdmin: true, kecamatanScope: null }, error: null };
-  if (profile?.role === "penyuluh" && profile.koordinator) {
+  if (profile?.role === "penyuluh_bpp" && profile.koordinator) {
     return { auth: { isAdmin: false, kecamatanScope: profile.kecamatanWilayah }, error: null };
   }
   return { auth: null, error: "Cuma admin atau koordinator kecamatan yang boleh mengelola pengguna." };
@@ -90,12 +94,16 @@ async function assertTargetManageable(auth: ManagerAuth, targetId: string): Prom
   if (auth.isAdmin) return null;
 
   const adminClient = createAdminClient();
-  const { data: target } = await adminClient.from("profiles").select("role, koordinator").eq("id", targetId).maybeSingle();
-  if (!target) return "Pengguna tidak ditemukan.";
-  if (target.role !== "penyuluh" || target.koordinator) return "Anda tidak berwenang mengelola akun ini.";
+  const adminCoreClient = createAdminCoreClient();
+  const [{ data: membership }, { data: koordinatorRow }] = await Promise.all([
+    adminCoreClient.from("memberships").select("role").eq("user_id", targetId).eq("app_slug", "alsintan").maybeSingle(),
+    adminClient.from("penyuluh").select("koordinator").eq("profile_id", targetId).maybeSingle(),
+  ]);
+  if (!membership) return "Pengguna tidak ditemukan.";
+  if (membership.role !== "penyuluh_bpp" || koordinatorRow?.koordinator) return "Anda tidak berwenang mengelola akun ini.";
 
   const { data: desaRows } = await adminClient
-    .from("profile_desa")
+    .from("penyuluh_desa")
     .select("master_desa(master_kecamatan(nama_kecamatan))")
     .eq("profile_id", targetId);
   const targetKecamatan = new Set(
@@ -110,22 +118,22 @@ async function assertTargetManageable(auth: ManagerAuth, targetId: string): Prom
 
 async function getExistingDesaIds(profileId: string): Promise<string[]> {
   const adminClient = createAdminClient();
-  const { data } = await adminClient.from("profile_desa").select("id_desa").eq("profile_id", profileId);
+  const { data } = await adminClient.from("penyuluh_desa").select("id_desa").eq("profile_id", profileId);
   return (data ?? []).map((r) => r.id_desa as string);
 }
 
 async function syncDesaWilayah(profileId: string, desaIds: string[]): Promise<string | null> {
-  // Admin client -- profile_desa_write RLS cuma izinkan admin, sementara
-  // koordinator (sudah divalidasi lewat validateDesaScope/assertTargetManageable
-  // di atas) juga perlu bisa menulis di sini.
+  // Admin client -- koordinator (sudah divalidasi lewat
+  // validateDesaScope/assertTargetManageable di atas) juga perlu bisa
+  // menulis di sini, jadi pakai service role (bypass RLS).
   const adminClient = createAdminClient();
 
-  const { error: deleteError } = await adminClient.from("profile_desa").delete().eq("profile_id", profileId);
+  const { error: deleteError } = await adminClient.from("penyuluh_desa").delete().eq("profile_id", profileId);
   if (deleteError) return friendlyDbError(deleteError, "Gagal menyimpan wilayah desa.");
 
   if (desaIds.length > 0) {
     const { error: insertError } = await adminClient
-      .from("profile_desa")
+      .from("penyuluh_desa")
       .insert(desaIds.map((id_desa) => ({ profile_id: profileId, id_desa })));
     if (insertError) return friendlyDbError(insertError, "Gagal menyimpan wilayah desa.");
   }
@@ -147,27 +155,28 @@ export async function createPengguna(
   if (!email || !password) return { error: "Email dan password wajib diisi." };
   if (password.length < 6) return { error: "Password minimal 6 karakter." };
   if (!VALID_ROLES.includes(role)) return { error: "Role tidak dikenali." };
-  if (!auth.isAdmin && role !== "penyuluh") return { error: "Anda cuma bisa membuat akun penyuluh." };
+  if (!auth.isAdmin && role !== "penyuluh_bpp") return { error: "Anda cuma bisa membuat akun penyuluh." };
 
-  const koordinatorRequested = role === "penyuluh" && formData.get("koordinator") === "on";
+  const koordinatorRequested = role === "penyuluh_bpp" && formData.get("koordinator") === "on";
   if (koordinatorRequested && !auth.isAdmin) return { error: "Cuma admin yang boleh menetapkan koordinator." };
 
   const nama = (formData.get("nama") as string)?.trim() || null;
   const nip = (formData.get("nip") as string)?.trim() || null;
   const koordinator = koordinatorRequested;
-  const desaIds = role === "penyuluh" ? formData.getAll("id_desa").map(String) : [];
+  const desaIds = role === "penyuluh_bpp" ? formData.getAll("id_desa").map(String) : [];
 
   const desaScopeError = await validateDesaScope(auth, desaIds);
   if (desaScopeError) return { error: desaScopeError };
 
   // Cek duplikat NIP DULU sebelum bikin akun Auth -- kalau dicek belakangan
   // (setelah createUser), akun yang sudah kadung dibuat jadi nyangkut tanpa
-  // detail yang benar ketika update profil gagal karena NIP bentrok. Pakai
-  // admin client -- profiles_select RLS membatasi client biasa cuma bisa
-  // baca baris sendiri untuk non-admin.
+  // detail yang benar ketika update profil gagal karena NIP bentrok. NIP
+  // sekarang di core.profiles (identitas lintas-app, project Supabase
+  // shared "FULLSTACK").
   const adminClient = createAdminClient();
+  const adminCoreClient = createAdminCoreClient();
   if (nip) {
-    const { data: existingNip } = await adminClient.from("profiles").select("id").eq("nip", nip).maybeSingle();
+    const { data: existingNip } = await adminCoreClient.from("profiles").select("id").eq("nip", nip).maybeSingle();
     if (existingNip) return { error: "NIP ini sudah dipakai, gunakan yang lain." };
   }
 
@@ -189,14 +198,24 @@ export async function createPengguna(
 
   const userId = created.user.id;
 
-  // handle_new_user() trigger otomatis bikin baris profiles (role default
-  // 'penyuluh', koordinator false, nip null) begitu auth.users terisi --
-  // di sini tinggal update ke nilai yang sebenarnya diminta di form.
-  const { error: profileError } = await adminClient
+  // Upsert (bukan update) ke core.profiles/core.memberships -- BELUM
+  // dipastikan apakah masih ada trigger seperti handle_new_user() lama yang
+  // otomatis bikin baris ini begitu auth.users terisi. Upsert aman untuk
+  // kedua kemungkinan (trigger bikin baris duluan, atau tidak sama sekali).
+  const { error: profileError } = await adminCoreClient
     .from("profiles")
-    .update({ role, koordinator, nip, nama })
-    .eq("id", userId);
+    .upsert({ id: userId, email, nama, nip }, { onConflict: "id" });
   if (profileError) return { error: friendlyDbError(profileError, "Akun dibuat, tapi gagal menyimpan detail pengguna.") };
+
+  const { error: membershipError } = await adminCoreClient
+    .from("memberships")
+    .upsert({ user_id: userId, app_slug: "alsintan", role }, { onConflict: "user_id,app_slug" });
+  if (membershipError) return { error: friendlyDbError(membershipError, "Akun dibuat, tapi gagal menyimpan role pengguna.") };
+
+  const { error: koordinatorError } = await adminClient
+    .from("penyuluh")
+    .upsert({ profile_id: userId, koordinator }, { onConflict: "profile_id" });
+  if (koordinatorError) return { error: friendlyDbError(koordinatorError, "Akun dibuat, tapi gagal menyimpan status koordinator.") };
 
   const desaError = await syncDesaWilayah(userId, desaIds);
   if (desaError) return { error: `Akun dibuat, tapi ${desaError.charAt(0).toLowerCase()}${desaError.slice(1)}` };
@@ -218,9 +237,9 @@ export async function updatePengguna(
 
   const role = formData.get("role") as string;
   if (!VALID_ROLES.includes(role)) return { error: "Role tidak dikenali." };
-  if (!auth.isAdmin && role !== "penyuluh") return { error: "Anda cuma bisa mengelola akun penyuluh." };
+  if (!auth.isAdmin && role !== "penyuluh_bpp") return { error: "Anda cuma bisa mengelola akun penyuluh." };
 
-  const koordinatorRequested = role === "penyuluh" && formData.get("koordinator") === "on";
+  const koordinatorRequested = role === "penyuluh_bpp" && formData.get("koordinator") === "on";
   if (koordinatorRequested && !auth.isAdmin) return { error: "Cuma admin yang boleh menetapkan koordinator." };
 
   const password = formData.get("password") as string;
@@ -241,15 +260,29 @@ export async function updatePengguna(
   // merender field itu untuk admin, jadi otomatis kosong/false di sini
   // kalau role-nya admin (wilayah lama ikut kebersihkan saat role diganti).
   const koordinator = koordinatorRequested;
-  const desaIds = role === "penyuluh" ? formData.getAll("id_desa").map(String) : [];
+  const desaIds = role === "penyuluh_bpp" ? formData.getAll("id_desa").map(String) : [];
 
   const existingDesaIds = auth.isAdmin ? [] : await getExistingDesaIds(id);
   const desaScopeError = await validateDesaScope(auth, desaIds, existingDesaIds);
   if (desaScopeError) return { error: desaScopeError };
 
+  // Target sudah pasti ada (lolos assertTargetManageable), jadi upsert di
+  // sini cuma jaga-jaga kalau baris core.profiles/core.memberships-nya
+  // ternyata belum lengkap (mis. akun lama dari sebelum migrasi schema).
   const adminClient = createAdminClient();
-  const { error: profileError } = await adminClient.from("profiles").update({ role, koordinator, nip, nama }).eq("id", id);
+  const adminCoreClient = createAdminCoreClient();
+  const { error: profileError } = await adminCoreClient.from("profiles").update({ nip, nama }).eq("id", id);
   if (profileError) return { error: friendlyDbError(profileError, "Gagal menyimpan perubahan pengguna.") };
+
+  const { error: membershipError } = await adminCoreClient
+    .from("memberships")
+    .upsert({ user_id: id, app_slug: "alsintan", role }, { onConflict: "user_id,app_slug" });
+  if (membershipError) return { error: friendlyDbError(membershipError, "Gagal menyimpan role pengguna.") };
+
+  const { error: koordinatorError } = await adminClient
+    .from("penyuluh")
+    .upsert({ profile_id: id, koordinator }, { onConflict: "profile_id" });
+  if (koordinatorError) return { error: friendlyDbError(koordinatorError, "Gagal menyimpan status koordinator.") };
 
   const desaError = await syncDesaWilayah(id, desaIds);
   if (desaError) return { error: desaError };
@@ -269,8 +302,14 @@ export async function deletePengguna(id: string): Promise<PenggunaActionState> {
   if (targetError) return { error: targetError };
 
   const adminClient = createAdminClient();
-  // Hapus di Auth otomatis menghapus baris profiles+profile_desa juga
-  // (foreign key ON DELETE CASCADE), tidak perlu hapus manual di public.*.
+  // Belum dipastikan apakah core.profiles/core.memberships masih di-cascade
+  // otomatis (ON DELETE CASCADE) dari auth.users setelah migrasi ke schema
+  // shared -- jadi tabel milik app ini sendiri (penyuluh/penyuluh_desa)
+  // dibersihkan manual dulu di sini supaya tidak ada baris yatim tersisa
+  // kalau ternyata tidak ada cascade.
+  await adminClient.from("penyuluh_desa").delete().eq("profile_id", id);
+  await adminClient.from("penyuluh").delete().eq("profile_id", id);
+
   const { error } = await adminClient.auth.admin.deleteUser(id);
   if (error) return { error: error.message };
 
