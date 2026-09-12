@@ -17,6 +17,7 @@ export default async function RootPage() {
   } = await supabase.auth.getUser();
 
   const { data: stats, error: statsError } = await supabase
+    .schema("cws")
     .rpc("get_landing_stats")
     .single<{ total_alsintan: number; total_kelompok: number }>();
 
@@ -24,31 +25,35 @@ export default async function RootPage() {
     console.error("get_landing_stats gagal (migration 0008/0020 sudah dijalankan?):", statsError.message);
   }
 
-  const { data: yearly, error: yearlyError } = await supabase.rpc("get_landing_yearly_stats");
+  const { data: yearly, error: yearlyError } = await supabase.schema("cws").rpc("get_landing_yearly_stats");
 
   if (yearlyError) {
     console.error("get_landing_yearly_stats gagal (migration 0009 sudah dijalankan?):", yearlyError.message);
   }
 
-  const { data: kategori, error: kategoriError } = await supabase.rpc("get_landing_kategori_stats");
+  const { data: kategori, error: kategoriError } = await supabase.schema("cws").rpc("get_landing_kategori_stats");
 
   if (kategoriError) {
     console.error("get_landing_kategori_stats gagal (migration 0015 sudah dijalankan?):", kategoriError.message);
   }
 
-  const { data: jenis, error: jenisError } = await supabase.rpc("get_landing_jenis_stats");
+  const { data: jenis, error: jenisError } = await supabase.schema("cws").rpc("get_landing_jenis_stats");
 
   if (jenisError) {
     console.error("get_landing_jenis_stats gagal (migration 0016 sudah dijalankan?):", jenisError.message);
   }
 
-  const { data: kecamatanStats, error: kecamatanStatsError } = await supabase.rpc("get_landing_kecamatan_stats");
+  const { data: kecamatanStats, error: kecamatanStatsError } = await supabase
+    .schema("cws")
+    .rpc("get_landing_kecamatan_stats");
 
   if (kecamatanStatsError) {
     console.error("get_landing_kecamatan_stats gagal (migration 0010/0014 sudah dijalankan?):", kecamatanStatsError.message);
   }
 
-  const { data: kecamatanDetail, error: kecamatanDetailError } = await supabase.rpc("get_landing_kecamatan_detail");
+  const { data: kecamatanDetail, error: kecamatanDetailError } = await supabase
+    .schema("cws")
+    .rpc("get_landing_kecamatan_detail");
 
   if (kecamatanDetailError) {
     console.error("get_landing_kecamatan_detail gagal (migration 0019 sudah dijalankan?):", kecamatanDetailError.message);
